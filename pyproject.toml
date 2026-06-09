@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "srm"
+version = "0.1.0"
+description = "US 섹터 순환매 / 자금 흐름 판단 모델 — 신호 엔진 (예측기 아님, 확인기)"
+requires-python = ">=3.11"
+readme = "README.md"
+dependencies = [
+    "pandas",
+    "numpy",
+    "matplotlib",
+    "yfinance",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+    "black",
+]
+
+[project.scripts]
+srm = "srm.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100

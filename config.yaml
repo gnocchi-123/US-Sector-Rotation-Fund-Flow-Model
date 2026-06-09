@@ -1,0 +1,87 @@
+# srm 설정 — 모든 초기값은 sector_rotation_model.py 프로토타입에서 그대로 가져왔다.
+# 임의로 새 값을 만들지 말 것. 값 변경은 ROADMAP.md M4(휩소 리포트) 등 근거가 생긴 뒤에.
+
+tickers:
+  benchmark: SPY
+
+  # 섹터 ETF: 티커 -> 표시 이름
+  sectors:
+    XLK: "Technology"
+    XLF: "Financials"
+    XLV: "Health Care"
+    XLY: "Cons. Disc."
+    XLP: "Cons. Staples"
+    XLE: "Energy"
+    XLI: "Industrials"
+    XLB: "Materials"
+    XLU: "Utilities"
+    XLRE: "Real Estate"
+    XLC: "Communication"
+
+  # 위험선호 페어: 이름 -> [분자, 분모]
+  risk_pairs:
+    SmallVsLarge: [IWM, SPY]
+    EqualVsCap: [RSP, SPY]
+    CycVsDef: [XLY, XLP]
+    CreditRisk: [HYG, LQD]
+    GrowthVsValue: [VUG, VTV]
+
+  # 거시 참고 지표: 티커 -> 표시 이름
+  macro:
+    "^TNX": "10Y Yield"
+    USO: "Oil"
+    GLD: "Gold"
+    UUP: "Dollar"
+    "^VIX": "VIX"
+
+windows:
+  # Layer 1 (RRG): RS-Ratio / RS-Momentum 롤링 z-score 윈도우
+  rs_window: 14
+  mom_window: 14
+  # Layer 2 (위험선호): 비율 페어 추세 판정용 이동평균
+  risk_ma: 20
+  # Layer 3 (추세): 1차 추세 판정용 단/장기 이동평균
+  trend_fast: 50
+  trend_slow: 200
+
+weights:
+  # 종합 점수 = quad_flow + rotation 부호 + trend (결정 2)
+  # 의도된 편향: Improving(+2) > Leading(+1).
+  # "이미 주도 중인 곳보다 막 유입이 시작된 이른 신호를 더 높게 친다"는 본 시스템의
+  # 성격을 반영한 것으로, 모멘텀 추종이 아니다.
+  quad_flow:
+    Improving: 2
+    Leading: 1
+    Weakening: -1
+    Lagging: -2
+
+  # RS-Momentum의 직전 대비 변화 방향(회전) 점수
+  rotation:
+    up: 0.5
+    down: -0.5
+    flat: 0.0
+
+  # Layer 3 추세 점수 (trend_gate가 OFF일 때 단순 가중합에 더해진다)
+  trend:
+    Uptrend: 1
+    Neutral: 0
+    Downtrend: -1
+    "n/a": 0
+
+  # 추세 게이트 토글. 기본 OFF(프로토타입과 동일한 단순 가중합).
+  # ON이어도 Improving 분면은 강등하지 않는다(이른 신호라 추세가 Downtrend인 게 정상, 결정 3).
+  # 게이트 기본값 채택과 강등 규칙 확정은 M4의 휩소 실측 이후로 미룬다.
+  trend_gate: false
+
+data:
+  # yfinance 기본 다운로드 파라미터 (프로토타입 sector_rotation_model.py 기본값)
+  period: "2y"
+  interval: "1wk"
+
+thresholds:
+  # 위험선호 종합 판정 (페어 점수 합산 기준)
+  risk_on: 2
+  risk_off: -2
+
+disclaimer: >
+  주의: 신호 '확인' 도구이며 예측이 아님. 여러 신호 합의 시 신뢰. 투자자문 아님.
