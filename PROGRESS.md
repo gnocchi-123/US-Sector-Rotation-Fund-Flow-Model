@@ -39,19 +39,20 @@ ROADMAP.md의 커밋 분할 예시(1~6) 기준 진행 상황:
         `render_report`(콘솔 텍스트 보고서 — 일반인용 `[5] 용어 설명`/4분면 범례 신규
         추가, 면책문구는 `cfg.disclaimer`).
       - `pytest -q` 14개 통과(회귀 없음, 새 테스트는 ROADMAP상 이번 커밋 범위 아님).
-- [ ] 6b. `feat(report): rrg chart with english labels and legend` — **다음 작업**
-      — `report/plot.py`: `plot_rrg` 영어 라벨 + 분면 의미 범례.
-- [ ] 6c. `feat(cli): entry point (M1 완료)`
+- [x] 6b. `feat(report): rrg chart with english labels and legend`
+      — `report/plot.py`: `plot_rrg` 영어 라벨/제목 + 분면별 plain-language 범례
+        (Improving/Leading/Weakening/Lagging 의미 + 후행성 안내 문구).
+        합성 데이터로 차트 생성 확인(`/tmp`에 임시 저장 후 삭제).
+- [ ] 6c. `feat(cli): entry point (M1 완료)` — **다음 작업**
       — `config.py`에 `data.period`/`data.interval` 추가, `cli.py`(`collect_tickers`,
         `main`)로 fetch → synthesize → (옵션) plot 연결.
 
 **M1 마무리 권장 작업(ROADMAP)**: ruff/black 1회 정리, 실데이터 1회 실행 확인,
 `_ratio_series`/`_mom_series` 접근자 분리 여부 검토(선택).
 
-## 다음 작업 (커밋 6a 이후)
+## 다음 작업 (커밋 6b 이후)
 
-1. 커밋 6b: `report/plot.py` (영어 라벨 RRG 차트 + 분면 범례).
-2. 커밋 6c: `config.py`(data 섹션) + `cli.py` — M1 완료.
-3. M2: parquet 캐시, 스냅샷/재현성, JSON/CSV export, 차트 옵션화.
-4. M3: FRED 선행지표 + 경기 사이클 위치 추정.
-5. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
+1. 커밋 6c: `config.py`(data 섹션) + `cli.py` — M1 완료.
+2. M2: parquet 캐시, 스냅샷/재현성, JSON/CSV export, 차트 옵션화.
+3. M3: FRED 선행지표 + 경기 사이클 위치 추정.
+4. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
