@@ -85,9 +85,20 @@ ROADMAP.md의 커밋 분할 예시(1~6) 기준 진행 상황:
         `--from-snapshot <경로> --no-snapshot`으로 재실행해 동일 리포트 재현 및
         스냅샷이 추가 생성되지 않음을 확인.
 
+- [x] 3. `feat(report): json/csv export (--export)`
+      — `src/srm/report/export.py`: `build_export_payload`(generated_at/interval/
+        benchmark/regime/score/max_score/details/ranking/disclaimer를 dict로 묶음),
+        `export_json`(들여쓰기 JSON), `export_csv`(랭킹표 CSV).
+      — `cli.py`: `--export {json,csv}`(`action="append"`, 반복 지정 가능). 랭킹표가
+        비어 있으면 예외 없이 안내 메시지 출력 후 건너뜀. 기본 출력 파일명
+        `flow_table.json`/`flow_table.csv`(cwd).
+      — `tests/test_export.py` 3개: `build_export_payload` 스키마(키/타입, ranking
+        길이, disclaimer 비어있지 않음), `export_json`/`export_csv` 라운드트립.
+      - `pytest -q` 23개 통과(회귀 없음). 실데이터로 `--export json --export csv`
+        실행해 `flow_table.json`/`flow_table.csv` 생성 및 내용 확인.
+
 ## 다음 작업
 
-1. M2-3: `report/export.py` — JSON/CSV 내보내기(`--export`).
-2. M2-4: `report/plot.py` — RRG 4분면 색상 옵션화(`quadrant_colors`).
-3. M3: FRED 선행지표 + 경기 사이클 위치 추정.
-4. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
+1. M2-4: `report/plot.py` — RRG 4분면 색상 옵션화(`quadrant_colors`).
+2. M3: FRED 선행지표 + 경기 사이클 위치 추정.
+3. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.

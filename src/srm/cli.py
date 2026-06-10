@@ -7,11 +7,13 @@ from __future__ import annotations
 
 import argparse
 import sys
+from datetime import datetime, timezone
 
 from srm.config import Config, load_config
 from srm.data.cache import load_cached_prices, save_prices
 from srm.data.loader import fetch_prices
 from srm.data.snapshot import load_snapshot, save_snapshot
+from srm.report.export import build_export_payload, export_csv, export_json
 from srm.report.plot import plot_rrg
 from srm.report.synthesize import compute_flow_table, render_report
 from srm.signals.risk import compute_risk_appetite
@@ -47,6 +49,12 @@ def main() -> None:
         "--no-snapshot",
         action="store_true",
         help="이번 실행에 사용한 가격 데이터를 저장하지 않는다",
+    )
+    ap.add_argument(
+        "--export",
+        action="append",
+        choices=["json", "csv"],
+        help="섹터 자금흐름 랭킹을 파일로 내보낸다(반복 지정 가능)",
     )
     args = ap.parse_args()
 
@@ -84,6 +92,21 @@ def main() -> None:
     if args.plot and not flow_table.empty:
         rrg = compute_rrg(prices, cfg.benchmark, list(cfg.sectors), cfg.rs_window, cfg.mom_window)
         plot_rrg(rrg, tail=args.tail)
+
+    if args.export:
+        if flow_table.empty:
+            print("내보내기 건너뜀: 랭킹표가 비어 있습니다.")
+        else:
+            generated_at = datetime.now(timezone.utc).isoformat()
+            for fmt in args.export:
+                if fmt == "json":
+                    payload = build_export_payload(
+                        flow_table, risk, cfg, args.interval, generated_at
+                    )
+                    path = export_json(payload, "flow_table.json")
+                else:
+                    path = export_csv(flow_table, "flow_table.csv")
+                print(f"[내보내기] {path}")
 
 
 if __name__ == "__main__":
