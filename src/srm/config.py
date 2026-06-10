@@ -15,6 +15,7 @@ _REQUIRED_KEYS: dict[str, tuple[str, ...]] = {
     "tickers": ("benchmark", "sectors", "risk_pairs", "macro"),
     "windows": ("rs_window", "mom_window", "risk_ma", "trend_fast", "trend_slow"),
     "weights": ("quad_flow", "rotation", "trend", "trend_gate"),
+    "data": ("period", "interval"),
     "thresholds": ("risk_on", "risk_off"),
     "disclaimer": (),
 }
@@ -41,6 +42,9 @@ class Config:
     rotation: Mapping[str, float]
     trend: Mapping[str, float]
     trend_gate: bool
+
+    data_period: str
+    data_interval: str
 
     risk_on: float
     risk_off: float
@@ -79,11 +83,10 @@ def load_config(path: str | Path | None = None) -> Config:
     tickers = raw["tickers"]
     windows = raw["windows"]
     weights = raw["weights"]
+    data = raw["data"]
     thresholds = raw["thresholds"]
 
-    risk_pairs = {
-        name: (pair[0], pair[1]) for name, pair in tickers["risk_pairs"].items()
-    }
+    risk_pairs = {name: (pair[0], pair[1]) for name, pair in tickers["risk_pairs"].items()}
 
     return Config(
         benchmark=tickers["benchmark"],
@@ -99,6 +102,8 @@ def load_config(path: str | Path | None = None) -> Config:
         rotation=dict(weights["rotation"]),
         trend=dict(weights["trend"]),
         trend_gate=bool(weights["trend_gate"]),
+        data_period=str(data["period"]),
+        data_interval=str(data["interval"]),
         risk_on=float(thresholds["risk_on"]),
         risk_off=float(thresholds["risk_off"]),
         disclaimer=str(raw["disclaimer"]),

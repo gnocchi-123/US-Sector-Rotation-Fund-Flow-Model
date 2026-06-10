@@ -43,16 +43,21 @@ ROADMAP.md의 커밋 분할 예시(1~6) 기준 진행 상황:
       — `report/plot.py`: `plot_rrg` 영어 라벨/제목 + 분면별 plain-language 범례
         (Improving/Leading/Weakening/Lagging 의미 + 후행성 안내 문구).
         합성 데이터로 차트 생성 확인(`/tmp`에 임시 저장 후 삭제).
-- [ ] 6c. `feat(cli): entry point (M1 완료)` — **다음 작업**
-      — `config.py`에 `data.period`/`data.interval` 추가, `cli.py`(`collect_tickers`,
-        `main`)로 fetch → synthesize → (옵션) plot 연결.
+- [x] 6c. `feat(cli): entry point (M1 완료)`
+      — `config.py`: `_REQUIRED_KEYS`/`Config`에 `data.period`/`data.interval`
+        (`data_period`/`data_interval`) 추가(CLI 기본값 하드코딩 방지).
+      — `cli.py`: `collect_tickers`(벤치마크/섹터/위험선호 페어/거시 티커 합집합), `main`
+        (config 로드 → fetch_prices → compute_flow_table/compute_risk_appetite →
+        render_report 출력 → `--plot` 시 RRG 차트 저장). 다운로드 실패는 메시지 출력 후
+        `sys.exit(1)`로 안전 종료.
+      - `pytest -q` 14개 통과. `python -m srm.cli`(콘솔 리포트) 및
+        `python -m srm.cli --plot --interval 1wk --period 2y`(차트 생성) 실데이터로
+        직접 확인 완료.
 
-**M1 마무리 권장 작업(ROADMAP)**: ruff/black 1회 정리, 실데이터 1회 실행 확인,
-`_ratio_series`/`_mom_series` 접근자 분리 여부 검토(선택).
+**M1 완료.** ROADMAP.md 커밋 1~6 모두 반영됨.
 
-## 다음 작업 (커밋 6b 이후)
+## 다음 작업 (M1 완료 이후)
 
-1. 커밋 6c: `config.py`(data 섹션) + `cli.py` — M1 완료.
-2. M2: parquet 캐시, 스냅샷/재현성, JSON/CSV export, 차트 옵션화.
-3. M3: FRED 선행지표 + 경기 사이클 위치 추정.
-4. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
+1. M2: parquet 캐시, 스냅샷/재현성, JSON/CSV export, 차트 옵션화.
+2. M3: FRED 선행지표 + 경기 사이클 위치 추정.
+3. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
