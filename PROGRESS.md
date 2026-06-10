@@ -32,20 +32,26 @@ ROADMAP.md의 커밋 분할 예시(1~6) 기준 진행 상황:
           (RISK-ON/OFF/MIXED/Unknown) + 임계값 파라미터화 검증.
         - Trend: Uptrend/Downtrend/Neutral(눌림목)/n/a(티커 없음)/n/a(데이터 부족).
         - `pytest -q` 14개 통과(네트워크 없음).
-- [ ] 6. `feat(report): synthesize + cli + plot` — **다음 작업**
-      — `report/synthesize.py`(종합 점수: quad_flow + rotation 부호 + trend, trend_gate
-        토글 OFF 기본), `report/plot.py`(영어 라벨 RRG 차트), `cli.py`(엔트리포인트).
-      - **추가 요구사항(사용자, 이번 턴)**: 콘솔 리포트/RRG 차트 출력은 일반인도 이해하기
-        쉽게 — 전문용어(z-score, RS-Ratio 등)에 짧은 설명 병기, 4분면 의미를 표/범례로
-        명확히 표시. (단, 후행성/확인기·면책 문구 원칙은 그대로 유지.)
+- [x] 6a. `feat(report): synthesize composite score and report text`
+      — `src/srm/report/synthesize.py`: `compute_flow_score`(quad_flow + rotation 부호 +
+        trend, 결정 2; trend_gate는 토글만 존재하고 M1은 ON/OFF 동일, 강등 규칙은 M4로
+        보류, 결정 3), `compute_flow_table`(섹터별 RRG/추세/FlowScore 랭킹표),
+        `render_report`(콘솔 텍스트 보고서 — 일반인용 `[5] 용어 설명`/4분면 범례 신규
+        추가, 면책문구는 `cfg.disclaimer`).
+      - `pytest -q` 14개 통과(회귀 없음, 새 테스트는 ROADMAP상 이번 커밋 범위 아님).
+- [ ] 6b. `feat(report): rrg chart with english labels and legend` — **다음 작업**
+      — `report/plot.py`: `plot_rrg` 영어 라벨 + 분면 의미 범례.
+- [ ] 6c. `feat(cli): entry point (M1 완료)`
+      — `config.py`에 `data.period`/`data.interval` 추가, `cli.py`(`collect_tickers`,
+        `main`)로 fetch → synthesize → (옵션) plot 연결.
 
 **M1 마무리 권장 작업(ROADMAP)**: ruff/black 1회 정리, 실데이터 1회 실행 확인,
 `_ratio_series`/`_mom_series` 접근자 분리 여부 검토(선택).
 
-## 다음 작업 (커밋 5 이후)
+## 다음 작업 (커밋 6a 이후)
 
-1. 커밋 6: `report/synthesize.py` + `report/plot.py` + `cli.py` — M1 완료.
-   일반인이 이해하기 쉬운 출력(표/범례/용어 설명) 반영.
-2. M2: parquet 캐시, 스냅샷/재현성, JSON/CSV export, 차트 옵션화.
-3. M3: FRED 선행지표 + 경기 사이클 위치 추정.
-4. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
+1. 커밋 6b: `report/plot.py` (영어 라벨 RRG 차트 + 분면 범례).
+2. 커밋 6c: `config.py`(data 섹션) + `cli.py` — M1 완료.
+3. M2: parquet 캐시, 스냅샷/재현성, JSON/CSV export, 차트 옵션화.
+4. M3: FRED 선행지표 + 경기 사이클 위치 추정.
+5. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
