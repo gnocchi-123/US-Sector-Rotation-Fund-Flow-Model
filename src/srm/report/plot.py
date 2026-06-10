@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+from typing import Mapping
+
 import pandas as pd
 
 # quadrant -> (in-chart label color, plain-language meaning for the legend)
@@ -16,17 +18,35 @@ QUADRANT_DESC: dict[str, tuple[str, str]] = {
     "Improving": ("#1f77b4", "Underperforming but momentum turning up"),
 }
 
+# quadrant -> background fill color (plot_rrg의 기본값, quadrant_colors로 덮어쓸 수 있음)
+DEFAULT_QUADRANT_COLORS: dict[str, str] = {
+    "Leading": "#2ca02c",
+    "Weakening": "#ffbf00",
+    "Lagging": "#d62728",
+    "Improving": "#1f77b4",
+}
 
-def plot_rrg(rrg: pd.DataFrame, outfile: str = "rrg_chart.png", tail: int = 8) -> None:
+
+def plot_rrg(
+    rrg: pd.DataFrame,
+    outfile: str = "rrg_chart.png",
+    tail: int = 8,
+    quadrant_colors: Mapping[str, str] | None = None,
+) -> None:
     """Render a Relative Rotation Graph (RRG) and save it to `outfile`.
 
     `rrg`는 `compute_rrg()`의 반환값으로, 종목별 `_ratio_series`/`_mom_series`
     (RS-Ratio/RS-Momentum 전체 시계열)을 담고 있어야 한다.
+
+    `quadrant_colors`로 4분면 배경색 일부/전체를 덮어쓸 수 있다(기본값=
+    `DEFAULT_QUADRANT_COLORS`).
     """
     import matplotlib
 
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+
+    colors = {**DEFAULT_QUADRANT_COLORS, **(quadrant_colors or {})}
 
     fig, ax = plt.subplots(figsize=(10, 8))
     ax.axhline(100, color="gray", lw=0.8)
@@ -34,10 +54,10 @@ def plot_rrg(rrg: pd.DataFrame, outfile: str = "rrg_chart.png", tail: int = 8) -
 
     # Quadrant backgrounds: top-right=Leading, bottom-right=Weakening,
     # bottom-left=Lagging, top-left=Improving.
-    ax.fill_between([100, 200], 100, 200, color="#2ca02c", alpha=0.06)
-    ax.fill_between([100, 200], 0, 100, color="#ffbf00", alpha=0.06)
-    ax.fill_between([0, 100], 0, 100, color="#d62728", alpha=0.06)
-    ax.fill_between([0, 100], 100, 200, color="#1f77b4", alpha=0.06)
+    ax.fill_between([100, 200], 100, 200, color=colors["Leading"], alpha=0.06)
+    ax.fill_between([100, 200], 0, 100, color=colors["Weakening"], alpha=0.06)
+    ax.fill_between([0, 100], 0, 100, color=colors["Lagging"], alpha=0.06)
+    ax.fill_between([0, 100], 100, 200, color=colors["Improving"], alpha=0.06)
 
     for tkr, row in rrg.iterrows():
         r = row["_ratio_series"].dropna().iloc[-tail:]

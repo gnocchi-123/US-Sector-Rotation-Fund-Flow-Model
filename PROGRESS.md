@@ -97,8 +97,17 @@ ROADMAP.md의 커밋 분할 예시(1~6) 기준 진행 상황:
       - `pytest -q` 23개 통과(회귀 없음). 실데이터로 `--export json --export csv`
         실행해 `flow_table.json`/`flow_table.csv` 생성 및 내용 확인.
 
+- [x] 4. `feat(report): configurable rrg quadrant colors`
+      — `report/plot.py`: `DEFAULT_QUADRANT_COLORS`(4분면 배경색 상수화) +
+        `plot_rrg(..., quadrant_colors: Mapping[str, str] | None = None)`. 지정한
+        분면만 덮어쓰고 나머지는 기본값 유지. 기본 호출 시 기존 출력과 동일.
+      — `tests/test_plot.py` 2개: 합성 데이터로 `plot_rrg` 호출 시 파일 생성 확인
+        (기본 색상 / `quadrant_colors` 일부 override).
+      - `pytest -q` 25개 통과(회귀 없음). 실데이터로 `--plot` 차트 생성 확인.
+
+**M2 완료.** ROADMAP.md 캐시/스냅샷/내보내기/차트 옵션화 4개 작업 모두 반영됨.
+
 ## 다음 작업
 
-1. M2-4: `report/plot.py` — RRG 4분면 색상 옵션화(`quadrant_colors`).
-2. M3: FRED 선행지표 + 경기 사이클 위치 추정.
-3. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
+1. M3: FRED 선행지표 + 경기 사이클 위치 추정.
+2. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
