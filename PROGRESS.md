@@ -56,8 +56,26 @@ ROADMAP.md의 커밋 분할 예시(1~6) 기준 진행 상황:
 
 **M1 완료.** ROADMAP.md 커밋 1~6 모두 반영됨.
 
-## 다음 작업 (M1 완료 이후)
+## M2 — 캐시/스냅샷 · 내보내기 · 차트 개선
 
-1. M2: parquet 캐시, 스냅샷/재현성, JSON/CSV export, 차트 옵션화.
-2. M3: FRED 선행지표 + 경기 사이클 위치 추정.
-3. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
+- [x] 1. `feat(data): parquet price cache (--no-cache / --refresh)`
+      — `src/srm/data/cache.py`: `cache_path`(키 = 정렬된 티커 집합 + period + interval +
+        오늘 날짜 → sha256 해시, 날짜 변경 시 자동 daily refresh), `load_cached_prices`
+        (파일 없으면 `None`, 예외 없음), `save_prices`(parquet 저장).
+      — `pyproject.toml`에 `pyarrow` 의존성 추가(parquet I/O).
+      — `cli.py`: `--no-cache`(캐시 read/write 모두 생략), `--refresh`(캐시 무시하고
+        재다운로드, `--no-cache`가 아니면 결과 재저장) 플래그 추가.
+      — `tests/test_cache.py` 4개: `cache_path` 안정성/입력별 변화, 저장→로드 라운드트립
+        (parquet은 `DatetimeIndex.freq` 미보존 → `check_freq=False`), 캐시 미스 시 `None`.
+      - `pytest -q` 18개 통과(회귀 없음). 실데이터로 1차 실행(다운로드+캐시 저장) →
+        2차 실행 "[캐시] 저장된 가격 데이터 사용"(네트워크 미사용) 확인. `--refresh`,
+        `--no-cache` 동작도 직접 확인 완료.
+
+## 다음 작업
+
+1. M2-2: `data/snapshot.py` — 가격 데이터 스냅샷 저장/로드, `--from-snapshot`/
+   `--no-snapshot`, 재현성 테스트.
+2. M2-3: `report/export.py` — JSON/CSV 내보내기(`--export`).
+3. M2-4: `report/plot.py` — RRG 4분면 색상 옵션화(`quadrant_colors`).
+4. M3: FRED 선행지표 + 경기 사이클 위치 추정.
+5. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.

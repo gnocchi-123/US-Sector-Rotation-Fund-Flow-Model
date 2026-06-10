@@ -9,6 +9,7 @@ import argparse
 import sys
 
 from srm.config import Config, load_config
+from srm.data.cache import load_cached_prices, save_prices
 from srm.data.loader import fetch_prices
 from srm.report.plot import plot_rrg
 from srm.report.synthesize import compute_flow_table, render_report
@@ -34,14 +35,29 @@ def main() -> None:
     ap.add_argument("--interval", default=cfg.data_interval)
     ap.add_argument("--plot", action="store_true", help="RRG 차트를 저장한다")
     ap.add_argument("--tail", type=int, default=8, help="RRG 차트에 표시할 최근 봉 수")
+    ap.add_argument("--no-cache", action="store_true", help="가격 캐시를 읽거나 쓰지 않는다")
+    ap.add_argument(
+        "--refresh", action="store_true", help="캐시를 무시하고 가격 데이터를 새로 받는다"
+    )
     args = ap.parse_args()
 
-    print("데이터 다운로드 중...")
-    try:
-        prices = fetch_prices(collect_tickers(cfg), args.period, args.interval)
-    except Exception as e:
-        print(f"다운로드 실패: {e}")
-        sys.exit(1)
+    tickers = collect_tickers(cfg)
+
+    prices = None
+    if not args.no_cache and not args.refresh:
+        prices = load_cached_prices(tickers, args.period, args.interval)
+        if prices is not None:
+            print("[캐시] 저장된 가격 데이터 사용")
+
+    if prices is None:
+        print("데이터 다운로드 중...")
+        try:
+            prices = fetch_prices(tickers, args.period, args.interval)
+        except Exception as e:
+            print(f"다운로드 실패: {e}")
+            sys.exit(1)
+        if not args.no_cache:
+            save_prices(prices, tickers, args.period, args.interval)
 
     flow_table = compute_flow_table(prices, cfg)
     risk = compute_risk_appetite(prices, cfg.risk_pairs, cfg.risk_ma, cfg.risk_on, cfg.risk_off)
