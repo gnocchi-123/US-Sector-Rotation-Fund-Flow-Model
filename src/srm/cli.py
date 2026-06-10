@@ -11,6 +11,7 @@ import sys
 from srm.config import Config, load_config
 from srm.data.cache import load_cached_prices, save_prices
 from srm.data.loader import fetch_prices
+from srm.data.snapshot import load_snapshot, save_snapshot
 from srm.report.plot import plot_rrg
 from srm.report.synthesize import compute_flow_table, render_report
 from srm.signals.risk import compute_risk_appetite
@@ -39,25 +40,42 @@ def main() -> None:
     ap.add_argument(
         "--refresh", action="store_true", help="캐시를 무시하고 가격 데이터를 새로 받는다"
     )
+    ap.add_argument(
+        "--from-snapshot", help="저장된 스냅샷 디렉터리의 가격 데이터로 리포트를 재현한다"
+    )
+    ap.add_argument(
+        "--no-snapshot",
+        action="store_true",
+        help="이번 실행에 사용한 가격 데이터를 저장하지 않는다",
+    )
     args = ap.parse_args()
 
     tickers = collect_tickers(cfg)
 
-    prices = None
-    if not args.no_cache and not args.refresh:
-        prices = load_cached_prices(tickers, args.period, args.interval)
-        if prices is not None:
-            print("[캐시] 저장된 가격 데이터 사용")
+    if args.from_snapshot:
+        prices, meta = load_snapshot(args.from_snapshot)
+        print(f"[스냅샷] {args.from_snapshot} 사용 (저장 시각 {meta.get('timestamp', '?')})")
+    else:
+        prices = None
+        if not args.no_cache and not args.refresh:
+            prices = load_cached_prices(tickers, args.period, args.interval)
+            if prices is not None:
+                print("[캐시] 저장된 가격 데이터 사용")
 
-    if prices is None:
-        print("데이터 다운로드 중...")
-        try:
-            prices = fetch_prices(tickers, args.period, args.interval)
-        except Exception as e:
-            print(f"다운로드 실패: {e}")
-            sys.exit(1)
-        if not args.no_cache:
-            save_prices(prices, tickers, args.period, args.interval)
+        if prices is None:
+            print("데이터 다운로드 중...")
+            try:
+                prices = fetch_prices(tickers, args.period, args.interval)
+            except Exception as e:
+                print(f"다운로드 실패: {e}")
+                sys.exit(1)
+            if not args.no_cache:
+                save_prices(prices, tickers, args.period, args.interval)
+
+        if not args.no_snapshot:
+            save_snapshot(
+                prices, {"period": args.period, "interval": args.interval, "tickers": tickers}
+            )
 
     flow_table = compute_flow_table(prices, cfg)
     risk = compute_risk_appetite(prices, cfg.risk_pairs, cfg.risk_ma, cfg.risk_on, cfg.risk_off)

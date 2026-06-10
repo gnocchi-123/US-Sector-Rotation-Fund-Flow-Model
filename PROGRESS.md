@@ -71,11 +71,23 @@ ROADMAP.md의 커밋 분할 예시(1~6) 기준 진행 상황:
         2차 실행 "[캐시] 저장된 가격 데이터 사용"(네트워크 미사용) 확인. `--refresh`,
         `--no-cache` 동작도 직접 확인 완료.
 
+- [x] 2. `feat(data): snapshot price data for reproducibility (--from-snapshot)`
+      — `src/srm/data/snapshot.py`: `save_snapshot`(가격을 `snapshots/<UTC타임스탬프>/
+        prices.parquet` + `meta.json`로 저장, timestamp 자동 기록), `load_snapshot`
+        (두 파일을 읽어 복원).
+      — `cli.py`: `--from-snapshot PATH`(캐시/다운로드 생략하고 스냅샷 데이터로 리포트
+        생성, "[스냅샷] ... 사용 (저장 시각 ...)" 출력), `--no-snapshot`(이번 실행
+        결과를 스냅샷으로 저장하지 않음, 기본은 저장).
+      — `tests/test_snapshot.py` 2개: 저장→로드 라운드트립(meta에 timestamp 포함),
+        **재현성 테스트**(같은 스냅샷을 두 번 로드 → `compute_flow_table`+
+        `render_report` 결과 문자열이 완전히 동일).
+      - `pytest -q` 20개 통과(회귀 없음). 실데이터로 1회 실행(캐시+스냅샷 생성) →
+        `--from-snapshot <경로> --no-snapshot`으로 재실행해 동일 리포트 재현 및
+        스냅샷이 추가 생성되지 않음을 확인.
+
 ## 다음 작업
 
-1. M2-2: `data/snapshot.py` — 가격 데이터 스냅샷 저장/로드, `--from-snapshot`/
-   `--no-snapshot`, 재현성 테스트.
-2. M2-3: `report/export.py` — JSON/CSV 내보내기(`--export`).
-3. M2-4: `report/plot.py` — RRG 4분면 색상 옵션화(`quadrant_colors`).
-4. M3: FRED 선행지표 + 경기 사이클 위치 추정.
-5. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
+1. M2-3: `report/export.py` — JSON/CSV 내보내기(`--export`).
+2. M2-4: `report/plot.py` — RRG 4분면 색상 옵션화(`quadrant_colors`).
+3. M3: FRED 선행지표 + 경기 사이클 위치 추정.
+4. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
