@@ -101,8 +101,10 @@ fred:
     AWHMAN: { name: "Avg Weekly Hours, Mfg", higher_is: expansion }
     GACDFSA066MSFRBPHI: { name: "Philly Fed Mfg Survey", higher_is: expansion }
     GACDISA066MSFRBNY: { name: "Empire State Mfg Survey", higher_is: expansion }
-  # 레벨 z-score 산출에 쓰는 다운로드 이력 길이(년)
-  period_years: 10
+  # 레벨 z-score 산출에 쓰는 다운로드 이력 길이(년).
+  # cycle.level_window(120개월=10년)와 같으면 롤링 윈도우가 항상 불완전(min_periods)하게
+  # 계산되므로, 윈도우보다 넉넉히 받아 "역사 대비 수준" 판정을 안정시킨다.
+  period_years: 15
   # 키 불필요 보조 소스(DBnomics). 비우면 비활성.
   # ISM_PMI 미러는 2025-09부터 값 손상(≈10) + 2026-01 이후 갱신 정체가 실측 확인되어 제거함.
   # (갱신만 재개되면 stale 가드를 통과해 손상값이 z-score를 오염시킬 수 있었음.)

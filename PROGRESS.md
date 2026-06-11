@@ -189,8 +189,31 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
         이미 포함되어 키가 커밋되지 않음. `tests/test_dotenv.py` 3건.
       - `pytest -q` 60개 통과.
 
+- [x] 후속. FRED 키 검증 완료 (2026-06-11) — `.env` 설정 후 실데이터로 [5] 사이클
+      섹션 7종 지표 출력·캐시 재사용·스냅샷 포함 확인. 국면 Contraction(z -0.11) 판정.
+
+## M1~M3 리뷰 보완 (M4 사전 정비)
+
+전 모듈 리뷰(2026-06-11)에서 나온 보완 1~3 처리:
+
+- [x] 1. `test: flow score/table unit tests + rrg benchmark-missing degrade fix`
+      — `tests/test_synthesize.py`: 결정 2(가중 합산) 전수 파라미터화, Improving>Leading
+        의도 편향 부등식, rotation 순서, trend_gate 토글 동일성(M4에서 강등 규칙 추가 시
+        의도적으로 갱신할 것), 랭킹표 스키마/정렬/RS-Ratio 반면/점수 자기일관성, degrade 2종.
+      — 테스트가 드러낸 버그 수정: **벤치마크 티커 누락 시 `compute_rrg`가 KeyError로
+        죽던 것**을 빈 DataFrame degrade로 수정(`signals/rrg.py`).
+- [x] 2. `fix(report): cycle last_obs shows actual observation date`
+      — `signals/cycle.py`: 월말 리샘플 라벨(06-30처럼 미래로 보임) 대신 원 시계열의
+        실제 마지막 관측일 표기. 실데이터로 06-10/04-01 등 정확한 날짜 확인.
+- [x] 3. `feat(config): extend fred history to 15y for stable level z-score`
+      — `period_years` 10→15: level_window(120개월)와 같으면 z-score가 항상 불완전
+        윈도우(min_periods)로 계산되던 것을 해소.
+- `pytest -q` 115개 통과. 실데이터 재검증 완료.
+
+리뷰에서 나온 나머지 항목은 M4로 이월: 하드코딩 잔재(risk `iloc[-5]`, 거시 `iloc[-5]`),
+`compute_rrg` 중복 계산(rs_series 헬퍼와 함께), 사이클 z~0 칼날 경계(휩소 측정 대상에
+포함), 캐시/스냅샷 정리, risk_pairs 형식 검증.
+
 ## 다음 작업
 
-1. FRED_API_KEY 발급 → 레포 루트 `.env`에 `FRED_API_KEY=키` 작성 → 실데이터로
-   [5] 사이클 섹션 7종 지표 출력 확인.
-2. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
+1. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
