@@ -217,3 +217,5 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
 ## 다음 작업
 
 1. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
+   — **상세 계획은 `M4_PLAN.md`** (커밋 C1~C9 체크리스트, 함수 시그니처, 이월 항목 포함).
+   M4 완료 시 결정을 CLAUDE.md/스펙에 반영하고 M4_PLAN.md는 삭제.
