@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from datetime import datetime, timezone
 
@@ -24,6 +25,24 @@ from srm.signals.risk import compute_risk_appetite
 from srm.signals.rrg import compute_rrg
 
 FRED_CACHE_DIR = ".cache/fred"
+
+
+def load_dotenv(path: str = ".env") -> None:
+    """`.env` 파일이 있으면 환경변수로 주입한다 (FRED_API_KEY 등 로컬 비밀값용).
+
+    이미 설정된 환경변수는 덮어쓰지 않는다. 파일이 없으면 조용히 넘어간다.
+    `.env`는 .gitignore에 포함되어 있어 키가 레포에 커밋되지 않는다.
+    """
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, _, value = line.partition("=")
+                os.environ.setdefault(key.strip(), value.strip().strip("'\""))
+    except OSError:
+        pass
 
 
 def collect_tickers(cfg: Config) -> list[str]:
@@ -84,6 +103,7 @@ def _compute_cycle(cfg: Config, indicators: pd.DataFrame | None) -> dict | None:
 
 
 def main() -> None:
+    load_dotenv()
     ap = argparse.ArgumentParser(description="섹터 자금흐름 판단 모델")
     cfg = load_config()
     ap.add_argument("--period", default=cfg.data_period)
