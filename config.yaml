@@ -86,7 +86,11 @@ thresholds:
 # --- M3: 선행지표 (옵션 섹션 — 없거나 비어 있으면 사이클 분석을 건너뛴다) ---
 fred:
   # API 키는 환경변수 FRED_API_KEY에서만 읽는다. 이 파일에 키를 쓰지 말 것.
-  # ISM PMI(NAPM)는 라이선스 문제로 FRED에서 제거됨 → 아래 dbnomics 미러를 옵션으로 사용.
+  # ISM PMI(NAPM)는 라이선스 문제로 FRED에서 제거됐고, 무료 대체 경로(DBnomics 미러 등)도
+  # 2026-06 조사 결과 전부 손상/중단됨. 같은 성격(제조업 서베이 확산지수)의 공공 지표인
+  # 지역 연준 서베이 2종(필라델피아/뉴욕)으로 그 역할을 대신한다. 지역 표본이라는 한계가
+  # 있어 2종을 함께 사용하며, 수준은 z-score로 정규화되므로 ISM(50 기준)과의 스케일 차이는
+  # 판정에 영향 없음.
   # higher_is: 값이 높을수록 어느 쪽 신호인지 (expansion | contraction).
   # 선행지표는 발표 지연·사후 개정이 있어 최신 경제 상태와 다를 수 있다(후행성 한계).
   series:
@@ -95,15 +99,14 @@ fred:
     PERMIT: { name: "Building Permits", higher_is: expansion }
     UMCSENT: { name: "Consumer Sentiment (UMich)", higher_is: expansion }
     AWHMAN: { name: "Avg Weekly Hours, Mfg", higher_is: expansion }
+    GACDFSA066MSFRBPHI: { name: "Philly Fed Mfg Survey", higher_is: expansion }
+    GACDISA066MSFRBNY: { name: "Empire State Mfg Survey", higher_is: expansion }
   # 레벨 z-score 산출에 쓰는 다운로드 이력 길이(년)
   period_years: 10
   # 키 불필요 보조 소스(DBnomics). 비우면 비활성.
-  # DBnomics의 ISM 미러는 갱신이 정체될 수 있어 stale_months 가드로 자동 제외된다.
-  dbnomics:
-    ISM_PMI:
-      provider_code: "ISM/pmi/pm"
-      name: "ISM Manufacturing PMI"
-      higher_is: expansion
+  # ISM_PMI 미러는 2025-09부터 값 손상(≈10) + 2026-01 이후 갱신 정체가 실측 확인되어 제거함.
+  # (갱신만 재개되면 stale 가드를 통과해 손상값이 z-score를 오염시킬 수 있었음.)
+  dbnomics: {}
   # 마지막 관측이 이보다 오래된(개월) 시리즈는 사이클 판정에서 제외
   stale_months: 4
 

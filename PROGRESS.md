@@ -169,7 +169,21 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
 (FRED_API_KEY는 fred.stlouisfed.org에서 무료 발급 → 환경변수로 설정. 미설정이어도
 기존 기능은 그대로 동작하고 사이클 섹션만 Unknown/생략으로 degrade.)
 
+- [x] 후속. `feat(config): replace broken ism mirror with regional fed surveys`
+      — ISM PMI 무료 입수 경로 전수 실측(2026-06): DBnomics 미러 **값 손상**(2025-09부터
+        ≈10) + 갱신 정체(2026-01~), Nasdaq Data Link 404(라이선스 삭제), Trading
+        Economics 게스트 중단, ISM 공식 보도자료 로그인 게이트, S&P Global은 헤드라인만
+        무료(이력 유료), OECD BCI는 2024-01 중단. → **무료·합법 ISM PMI API 없음** 결론.
+      — 대체: 같은 성격(제조업 서베이 확산지수)의 공공 지표인 지역 연준 서베이 2종을
+        `fred.series`에 추가 — `GACDFSA066MSFRBPHI`(필라델피아, 1968~),
+        `GACDISA066MSFRBNY`(Empire State, 2001~). 둘 다 2026-05까지 갱신 실측 확인.
+        코드 변경 없음(config.yaml만). 사이클 판정은 5개 → 7개 지표 합의로 확대.
+      — DBnomics ISM_PMI 옵션 제거(`dbnomics: {}`): 손상값인 채 갱신만 재개되면 stale
+        가드를 통과해 z-score를 오염시킬 수 있어 선제 제거. `fetch_dbnomics_series`
+        코드는 범용 기능이라 유지.
+      - `pytest -q` 57개 통과(회귀 없음).
+
 ## 다음 작업
 
-1. (선택) FRED_API_KEY 발급 후 실데이터로 [5] 사이클 섹션 5종 지표 출력 확인.
+1. FRED_API_KEY 발급 후 실데이터로 [5] 사이클 섹션 7종 지표 출력 확인.
 2. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
