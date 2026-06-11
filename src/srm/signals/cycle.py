@@ -54,7 +54,8 @@ def indicator_state(
     수준 = 최신값의 롤링 z-score, 방향 = 최근 trend_window개월 변화의 부호.
     higher_is="contraction"이면 두 값의 부호를 반전해 '확장 방향 양수'로 맞춘다.
     """
-    monthly = series.dropna().resample("ME").last().dropna()
+    clean = series.dropna()
+    monthly = clean.resample("ME").last().dropna()
     if len(monthly) < trend_window + 1:
         return None
 
@@ -74,7 +75,9 @@ def indicator_state(
     return {
         "level_z": round(float(level_z), 2),
         "direction": direction,
-        "last_obs": monthly.index[-1].date(),
+        # 월말 리샘플 라벨(예: 06-30)은 실제 발표일보다 미래로 보일 수 있으므로,
+        # 사용자에게는 원 시계열의 실제 마지막 관측일을 보여준다.
+        "last_obs": clean.index.max().date(),
     }
 
 

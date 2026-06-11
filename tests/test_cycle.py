@@ -94,3 +94,16 @@ def test_cycle_outputs_state_descriptions_only(expansion_panel, contraction_pane
         text = out["description"] + " ".join(out["details"].values())
         for word in forbidden:
             assert word not in text
+
+
+def test_indicator_state_last_obs_is_actual_date_not_month_end():
+    """last_obs는 월말 리샘플 라벨이 아니라 원 시계열의 실제 마지막 관측일이다.
+
+    일간 시리즈가 월 중간(예: 6/10)에서 끝나면, 월말 라벨(6/30)은 실제 발표일보다
+    미래로 보여 사용자를 혼란시킨다 — 실데이터 검증(2026-06)에서 발견된 표기 문제.
+    """
+    idx = pd.date_range("2015-01-01", "2026-06-10", freq="D")
+    series = pd.Series(range(len(idx)), index=idx, dtype=float)
+    state = indicator_state(series)
+    assert state is not None
+    assert state["last_obs"] == idx[-1].date()  # 2026-06-10 (not 06-30)
