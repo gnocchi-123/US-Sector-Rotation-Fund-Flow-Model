@@ -135,10 +135,21 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
         FRED "." 결측 파싱, 부분 실패 degrade, DBnomics 파싱/실패, stale 가드.
       - `pytest -q` 39개 통과. **실측**: DBnomics ISM 미러는 2025-12에서 갱신 정체
         + 2025-09 이후 값 손상(≈10) 확인 → stale 가드가 통째로 제외함(설계 적중).
-- [ ] 3. `feat(signals): cycle phase pure functions`
+- [x] 3. `feat(signals): cycle phase pure functions`
+      — `src/srm/signals/cycle.py`: `classify_cycle_phase`(수준×방향 2×2 →
+        Recovery/Expansion/Slowdown/Contraction, rrg.classify_quadrant와 동형),
+        `indicator_state`(월말 리샘플 → 수준 z-score(롤링 120개월) + 최근 6개월
+        방향, `higher_is=contraction` 부호 반전, 데이터 부족 시 None),
+        `compute_cycle_position`(방향 투표 합 + 수준 z 평균 합성, 유효 지표
+        `min_indicators` 미만이면 Unknown degrade). 전부 순수함수.
+      — `tests/conftest.py`: `expansion_panel`/`contraction_panel` fixture
+        (시드 고정, 월간+일간 혼합 주기, drift 크게 — 칼날 경계 단언 회피).
+      — `tests/test_cycle.py` 12케이스: 2×2 전수, 방향/반전, Expansion/Contraction
+        판정, 빈 입력·지표 부족 degrade, 혼합 주기, 단정 표현 부재 검사.
+      - `pytest -q` 51개 통과(회귀 없음).
 - [ ] 4. `feat(report): cycle section + cli wiring (M3 완료)`
 
 ## 다음 작업
 
-1. M3 커밋 3: `signals/cycle.py` — 수준×방향 2×2 사이클 분류 순수함수.
+1. M3 커밋 4: 리포트 사이클 섹션 + export `cycle` 키 + CLI 배선 (M3 완료).
 2. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
