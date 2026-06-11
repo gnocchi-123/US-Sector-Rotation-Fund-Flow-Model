@@ -183,7 +183,14 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
         코드는 범용 기능이라 유지.
       - `pytest -q` 57개 통과(회귀 없음).
 
+- [x] 후속. `feat(cli): load FRED_API_KEY from local .env file`
+      — `cli.py`에 `load_dotenv()`(stdlib only): CLI 시작 시 `.env`를 환경변수로 주입.
+        기존 환경변수 우선(덮어쓰지 않음), 파일 없으면 무시. `.env`는 .gitignore에
+        이미 포함되어 키가 커밋되지 않음. `tests/test_dotenv.py` 3건.
+      - `pytest -q` 60개 통과.
+
 ## 다음 작업
 
-1. FRED_API_KEY 발급 후 실데이터로 [5] 사이클 섹션 7종 지표 출력 확인.
+1. FRED_API_KEY 발급 → 레포 루트 `.env`에 `FRED_API_KEY=키` 작성 → 실데이터로
+   [5] 사이클 섹션 7종 지표 출력 확인.
 2. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
