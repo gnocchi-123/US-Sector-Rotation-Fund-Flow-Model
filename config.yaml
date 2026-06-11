@@ -83,5 +83,43 @@ thresholds:
   risk_on: 2
   risk_off: -2
 
+# --- M3: 선행지표 (옵션 섹션 — 없거나 비어 있으면 사이클 분석을 건너뛴다) ---
+fred:
+  # API 키는 환경변수 FRED_API_KEY에서만 읽는다. 이 파일에 키를 쓰지 말 것.
+  # ISM PMI(NAPM)는 라이선스 문제로 FRED에서 제거됨 → 아래 dbnomics 미러를 옵션으로 사용.
+  # higher_is: 값이 높을수록 어느 쪽 신호인지 (expansion | contraction).
+  # 선행지표는 발표 지연·사후 개정이 있어 최신 경제 상태와 다를 수 있다(후행성 한계).
+  series:
+    T10Y2Y: { name: "10Y-2Y Term Spread", higher_is: expansion }
+    ICSA: { name: "Initial Jobless Claims", higher_is: contraction }
+    PERMIT: { name: "Building Permits", higher_is: expansion }
+    UMCSENT: { name: "Consumer Sentiment (UMich)", higher_is: expansion }
+    AWHMAN: { name: "Avg Weekly Hours, Mfg", higher_is: expansion }
+  # 레벨 z-score 산출에 쓰는 다운로드 이력 길이(년)
+  period_years: 10
+  # 키 불필요 보조 소스(DBnomics). 비우면 비활성.
+  # DBnomics의 ISM 미러는 갱신이 정체될 수 있어 stale_months 가드로 자동 제외된다.
+  dbnomics:
+    ISM_PMI:
+      provider_code: "ISM/pmi/pm"
+      name: "ISM Manufacturing PMI"
+      higher_is: expansion
+  # 마지막 관측이 이보다 오래된(개월) 시리즈는 사이클 판정에서 제외
+  stale_months: 4
+
+cycle:
+  # 방향 판정: 최근 N개월 변화의 부호
+  trend_window: 6
+  # 수준 판정: 레벨 z-score 롤링 윈도우(개월)
+  level_window: 120
+  # 유효 지표가 이 미만이면 'Unknown (데이터 부족)'으로 degrade
+  min_indicators: 2
+  # 국면별 '역사적으로 정합적이라고 알려진' 섹터군 — 참고용 맥락 정보이며 추천이 아님.
+  phase_sectors:
+    Recovery: [XLY, XLF, XLI, XLB, XLRE]
+    Expansion: [XLK, XLC, XLI, XLF]
+    Slowdown: [XLE, XLV, XLP, XLU]
+    Contraction: [XLP, XLU, XLV]
+
 disclaimer: >
   주의: 신호 '확인' 도구이며 예측이 아님. 여러 신호 합의 시 신뢰. 투자자문 아님.

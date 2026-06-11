@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -51,6 +51,16 @@ class Config:
 
     disclaimer: str
 
+    # --- M3 옵션 섹션 (config.yaml에 없으면 빈 값/기본값 — 사이클 분석을 건너뛴다) ---
+    fred_series: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
+    fred_dbnomics: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
+    fred_period_years: int = 10
+    fred_stale_months: int = 4
+    cycle_trend_window: int = 6
+    cycle_level_window: int = 120
+    cycle_min_indicators: int = 2
+    phase_sectors: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
+
 
 def _require(raw: Mapping[str, Any], top: str, sub_keys: tuple[str, ...]) -> Mapping[str, Any]:
     if top not in raw:
@@ -63,6 +73,32 @@ def _require(raw: Mapping[str, Any], top: str, sub_keys: tuple[str, ...]) -> Map
             if key not in section:
                 raise ConfigError(f"config.yaml의 '{top}.{key}' 키가 없습니다.")
     return section
+
+
+_VALID_HIGHER_IS = ("expansion", "contraction")
+
+
+def _parse_indicator_meta(
+    section: Mapping[str, Any] | None, where: str
+) -> dict[str, dict[str, str]]:
+    """fred.series / fred.dbnomics 항목 파싱. higher_is 값이 잘못되면 ConfigError."""
+    if not section:
+        return {}
+    if not isinstance(section, Mapping):
+        raise ConfigError(f"config.yaml의 '{where}'은(는) 매핑(dict)이어야 합니다.")
+    out: dict[str, dict[str, str]] = {}
+    for series_id, meta in section.items():
+        meta = dict(meta or {})
+        higher_is = meta.get("higher_is", "expansion")
+        if higher_is not in _VALID_HIGHER_IS:
+            raise ConfigError(
+                f"config.yaml의 '{where}.{series_id}.higher_is'는 "
+                f"{_VALID_HIGHER_IS} 중 하나여야 합니다 (현재: {higher_is!r})."
+            )
+        meta["higher_is"] = higher_is
+        meta.setdefault("name", str(series_id))
+        out[str(series_id)] = meta
+    return out
 
 
 def load_config(path: str | Path | None = None) -> Config:
@@ -88,6 +124,14 @@ def load_config(path: str | Path | None = None) -> Config:
 
     risk_pairs = {name: (pair[0], pair[1]) for name, pair in tickers["risk_pairs"].items()}
 
+    # M3 옵션 섹션 — 없으면 빈 dict/기본값으로 두고 사이클 분석은 건너뛴다.
+    fred = raw.get("fred") or {}
+    cycle = raw.get("cycle") or {}
+    phase_sectors = {
+        str(phase): tuple(str(t) for t in tickers_)
+        for phase, tickers_ in (cycle.get("phase_sectors") or {}).items()
+    }
+
     return Config(
         benchmark=tickers["benchmark"],
         sectors=dict(tickers["sectors"]),
@@ -107,4 +151,12 @@ def load_config(path: str | Path | None = None) -> Config:
         risk_on=float(thresholds["risk_on"]),
         risk_off=float(thresholds["risk_off"]),
         disclaimer=str(raw["disclaimer"]),
+        fred_series=_parse_indicator_meta(fred.get("series"), "fred.series"),
+        fred_dbnomics=_parse_indicator_meta(fred.get("dbnomics"), "fred.dbnomics"),
+        fred_period_years=int(fred.get("period_years", 10)),
+        fred_stale_months=int(fred.get("stale_months", 4)),
+        cycle_trend_window=int(cycle.get("trend_window", 6)),
+        cycle_level_window=int(cycle.get("level_window", 120)),
+        cycle_min_indicators=int(cycle.get("min_indicators", 2)),
+        phase_sectors=phase_sectors,
     )

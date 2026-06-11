@@ -107,7 +107,29 @@ ROADMAP.md의 커밋 분할 예시(1~6) 기준 진행 상황:
 
 **M2 완료.** ROADMAP.md 캐시/스냅샷/내보내기/차트 옵션화 4개 작업 모두 반영됨.
 
+## M3 — FRED 선행지표 + 경기 사이클 위치 추정
+
+사전 결정(사용자 확정): ① ISM PMI는 라이선스 문제로 FRED에서 제거됨 →
+FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM PMI
+옵션(키 불필요, stale 가드로 정체 시 자동 제외). ② 국면 명칭 = 회복/확장/둔화/수축
+(수준×방향 2×2와 1:1 대응). ③ FRED 접근 = 공식 API + `FRED_API_KEY` 환경변수
+(무료 발급, 키 없으면 사이클 섹션만 안전 생략).
+
+- [x] 1. `feat(config): optional fred/cycle sections`
+      — `config.yaml`: `fred`(series/period_years/dbnomics/stale_months),
+        `cycle`(trend_window/level_window/min_indicators/phase_sectors) 옵션 섹션.
+      — `config.py`: `_REQUIRED_KEYS` 불변(하위호환), `raw.get()` + 기본값으로 파싱.
+        Config에 `fred_series`/`fred_dbnomics`/`fred_period_years`/`fred_stale_months`/
+        `cycle_trend_window`/`cycle_level_window`/`cycle_min_indicators`/`phase_sectors`
+        필드 추가. `higher_is`는 expansion/contraction만 허용(그 외 ConfigError).
+      — `tests/test_config.py`: 섹션 없는 config 하위호환, 섹션 파싱, `higher_is` 검증,
+        기본 config.yaml에 M3 섹션 존재 확인.
+      - `pytest -q` 29개 통과(회귀 없음).
+- [ ] 2. `feat(data): fred + dbnomics leading-indicator loaders (network isolated)`
+- [ ] 3. `feat(signals): cycle phase pure functions`
+- [ ] 4. `feat(report): cycle section + cli wiring (M3 완료)`
+
 ## 다음 작업
 
-1. M3: FRED 선행지표 + 경기 사이클 위치 추정.
+1. M3 커밋 2: `data/fred.py` — FRED 공식 API + DBnomics 로더, stale 가드, degrade.
 2. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
