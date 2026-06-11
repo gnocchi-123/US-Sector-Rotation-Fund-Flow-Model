@@ -125,11 +125,20 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
       — `tests/test_config.py`: 섹션 없는 config 하위호환, 섹션 파싱, `higher_is` 검증,
         기본 config.yaml에 M3 섹션 존재 확인.
       - `pytest -q` 29개 통과(회귀 없음).
-- [ ] 2. `feat(data): fred + dbnomics leading-indicator loaders (network isolated)`
+- [x] 2. `feat(data): fred + dbnomics leading-indicator loaders (network isolated)`
+      — `src/srm/data/fred.py`: `fetch_fred_series`(공식 API, 키=환경변수
+        `FRED_API_KEY`, 키 없으면 빈 DF로 degrade, 시리즈별 부분 degrade),
+        `fetch_dbnomics_series`(키 불필요 보조 소스), `drop_stale_series`
+        (마지막 관측이 N개월 이상 오래된 시리즈 제외). urllib(stdlib)만 사용
+        — 의존성 추가 없음. 네트워크는 `_request_json` 한 지점에 격리.
+      — `tests/test_fred.py` 10케이스: 키 env 읽기, 키 없음→네트워크 미호출+빈 DF,
+        FRED "." 결측 파싱, 부분 실패 degrade, DBnomics 파싱/실패, stale 가드.
+      - `pytest -q` 39개 통과. **실측**: DBnomics ISM 미러는 2025-12에서 갱신 정체
+        + 2025-09 이후 값 손상(≈10) 확인 → stale 가드가 통째로 제외함(설계 적중).
 - [ ] 3. `feat(signals): cycle phase pure functions`
 - [ ] 4. `feat(report): cycle section + cli wiring (M3 완료)`
 
 ## 다음 작업
 
-1. M3 커밋 2: `data/fred.py` — FRED 공식 API + DBnomics 로더, stale 가드, degrade.
+1. M3 커밋 3: `signals/cycle.py` — 수준×방향 2×2 사이클 분류 순수함수.
 2. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
