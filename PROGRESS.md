@@ -147,9 +147,29 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
       — `tests/test_cycle.py` 12케이스: 2×2 전수, 방향/반전, Expansion/Contraction
         판정, 빈 입력·지표 부족 degrade, 혼합 주기, 단정 표현 부재 검사.
       - `pytest -q` 51개 통과(회귀 없음).
-- [ ] 4. `feat(report): cycle section + cli wiring (M3 완료)`
+- [x] 4. `feat(report): cycle section + cli wiring (M3 완료)`
+      — `report/synthesize.py`: `render_report(..., cycle=None)` — [4] 거시 참고 뒤에
+        "[5] 경기 사이클 위치 (선행지표 합의, 참고용 맥락)" 삽입, 용어 설명은 [6]으로.
+        국면 한글 표기(PHASE_KO), 정합 섹터군(참고/추천 아님), 발표지연·개정 한계
+        고정 문구(CYCLE_LIMITATION). `cycle=None`이면 생략 안내 한 줄(degrade).
+      — `report/export.py`: payload에 `cycle` 키(None이면 null, 있으면 한계 note 포함).
+      — `data/snapshot.py`: `save_snapshot(..., extra_frames=)` + `load_snapshot_frame`
+        — 선행지표 패널을 스냅샷에 함께 저장해 사이클 섹션까지 재현(하위호환 유지).
+      — `cli.py`: `_load_indicators`(캐시 `.cache/fred` → FRED+DBnomics, --no-cache/
+        --refresh 공유) + `_compute_cycle`(stale 가드 → compute_cycle_position,
+        실패 시 None). 사이클 실패가 본 리포트를 절대 막지 않음.
+      — 테스트: `test_report_cycle.py` 3건(사이클 섹션/None degrade/Unknown),
+        `test_export.py` +2건(cycle null/note), `test_snapshot.py` +1건(extra_frames).
+      - `pytest -q` 57개 통과. **실데이터 검증**(키 미설정 환경): 기존 리포트 정상 +
+        [5] Unknown 표시, ISM_PMI stale 제외 메시지, 선행지표 캐시 2회차 재사용,
+        스냅샷에 indicators.parquet 포함되어 사이클까지 재현, JSON에 cycle 키 확인.
+        FRED 키 설정 시의 5종 지표 실측은 사용자 키 발급 후 확인 예정.
+
+**M3 완료.** ROADMAP.md의 FRED 선행지표/사이클 추정/보고서 섹션 3개 작업 모두 반영됨.
+(FRED_API_KEY는 fred.stlouisfed.org에서 무료 발급 → 환경변수로 설정. 미설정이어도
+기존 기능은 그대로 동작하고 사이클 섹션만 Unknown/생략으로 degrade.)
 
 ## 다음 작업
 
-1. M3 커밋 4: 리포트 사이클 섹션 + export `cycle` 키 + CLI 배선 (M3 완료).
+1. (선택) FRED_API_KEY 발급 후 실데이터로 [5] 사이클 섹션 5종 지표 출력 확인.
 2. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.

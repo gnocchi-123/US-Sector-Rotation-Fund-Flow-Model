@@ -6,7 +6,7 @@
 import pandas as pd
 
 from srm.config import Config
-from srm.data.snapshot import load_snapshot, save_snapshot
+from srm.data.snapshot import load_snapshot, load_snapshot_frame, save_snapshot
 from srm.report.synthesize import compute_flow_table, render_report
 from srm.signals.risk import compute_risk_appetite
 
@@ -24,6 +24,21 @@ def test_save_and_load_roundtrip(tmp_path, price_panel: pd.DataFrame):
     assert loaded_meta["period"] == "2y"
     assert loaded_meta["interval"] == "1wk"
     assert "timestamp" in loaded_meta
+
+
+def test_snapshot_extra_frames_roundtrip(tmp_path, price_panel, expansion_panel):
+    """선행지표 패널을 extra_frames로 저장하면 같은 스냅샷에서 복원된다."""
+    snap_dir = save_snapshot(
+        price_panel,
+        {"period": "2y", "interval": "1wk"},
+        tmp_path,
+        extra_frames={"indicators": expansion_panel},
+    )
+    loaded = load_snapshot_frame(snap_dir, "indicators")
+    pd.testing.assert_frame_equal(loaded, expansion_panel, check_freq=False)
+    # extra_frames 없이 저장된 과거 스냅샷은 None(하위호환, 예외 없음).
+    old_dir = save_snapshot(price_panel, {}, tmp_path)
+    assert load_snapshot_frame(old_dir, "indicators") is None
 
 
 def _sample_config() -> Config:

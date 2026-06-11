@@ -25,6 +25,20 @@ QUADRANT_DESC: dict[str, str] = {
     "Lagging": "소외/유출 - 상대적으로 약세이고 모멘텀도 약함",
 }
 
+# 경기 사이클 국면의 한글 표기 (signals/cycle.py의 2x2 분류와 동일한 정의).
+PHASE_KO: dict[str, str] = {
+    "Recovery": "회복",
+    "Expansion": "확장",
+    "Slowdown": "둔화",
+    "Contraction": "수축",
+}
+
+# 선행지표의 한계 — 사용자 대면 출력(콘솔/JSON)에 항상 함께 내보낸다.
+CYCLE_LIMITATION = (
+    "선행지표는 발표 지연(수일~1개월)과 사후 개정이 있어 최신 경제 상태와 "
+    "다를 수 있으며, 국면 분류는 미래 예측이 아닌 참고용 맥락 정보입니다."
+)
+
 
 def compute_flow_score(quadrant: str, mom_delta: float, trend: str, cfg: Config) -> float:
     """종합 점수 = quad_flow + rotation(부호) + trend (결정 2).
@@ -71,9 +85,18 @@ def compute_flow_table(prices: pd.DataFrame, cfg: Config) -> pd.DataFrame:
 
 
 def render_report(
-    flow_table: pd.DataFrame, risk: dict, prices: pd.DataFrame, cfg: Config, interval: str
+    flow_table: pd.DataFrame,
+    risk: dict,
+    prices: pd.DataFrame,
+    cfg: Config,
+    interval: str,
+    cycle: dict | None = None,
 ) -> str:
-    """콘솔 출력용 텍스트 보고서를 만든다. 면책문구는 cfg.disclaimer에서 가져온다."""
+    """콘솔 출력용 텍스트 보고서를 만든다. 면책문구는 cfg.disclaimer에서 가져온다.
+
+    cycle은 signals/cycle.py의 compute_cycle_position 결과(없으면 None —
+    FRED 키 미설정/다운로드 실패 시 사이클 섹션만 안내문으로 degrade).
+    """
     bar = "=" * 78
     lines = [
         bar,
@@ -114,7 +137,32 @@ def render_report(
                 pct = (s.iloc[-1] / s.iloc[-5] - 1) * 100
                 lines.append(f"     - {label:<10}({tkr:<6}): {pct:+.2f}%")
 
-    lines.append("\n[5] 용어 설명")
+    lines.append("\n[5] 경기 사이클 위치 (선행지표 합의, 참고용 맥락)")
+    if cycle is None:
+        lines.append(
+            "     데이터 없음 — fred 설정 또는 FRED_API_KEY 미설정, 혹은 다운로드 실패로"
+            " 사이클 분석을 생략합니다."
+        )
+        lines.append("     (FRED API 키는 fred.stlouisfed.org에서 무료 발급 가능)")
+    else:
+        phase = cycle["phase"]
+        label = f"{phase} ({PHASE_KO[phase]})" if phase in PHASE_KO else phase
+        lines.append(f"     국면: {label} — {cycle['description']}")
+        if phase in PHASE_KO:
+            lines.append(
+                f"     (지표 {cycle['counted']}개 합의: 방향 {cycle['direction_score']:+d},"
+                f" 수준 z {cycle['level_score']:+.2f})"
+            )
+        for name, desc in cycle["details"].items():
+            lines.append(f"     - {name:<28}: {desc}")
+        sectors = cfg.phase_sectors.get(phase)
+        if sectors:
+            names = ", ".join(f"{cfg.sectors.get(t, t)}({t})" for t in sectors)
+            lines.append("     · 이 국면과 역사적으로 정합적이라 알려진 섹터군(참고, 추천 아님):")
+            lines.append(f"       {names}")
+    lines.append(f"     ※ {CYCLE_LIMITATION}")
+
+    lines.append("\n[6] 용어 설명")
     lines.append("     이 표의 모든 신호는 '현재 상태 확인'이며, 미래 방향을 단정하지 않습니다.")
     lines.append("     흐름/순환 데이터는 후행적일 수 있습니다.")
     lines.append("")

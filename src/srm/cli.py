@@ -9,19 +9,28 @@ import argparse
 import sys
 from datetime import datetime, timezone
 
+import pandas as pd
+
 from srm.config import Config, load_config
 from srm.data.cache import load_cached_prices, save_prices
+from srm.data.fred import drop_stale_series, fetch_dbnomics_series, fetch_fred_series
 from srm.data.loader import fetch_prices
-from srm.data.snapshot import load_snapshot, save_snapshot
+from srm.data.snapshot import load_snapshot, load_snapshot_frame, save_snapshot
 from srm.report.export import build_export_payload, export_csv, export_json
 from srm.report.plot import plot_rrg
 from srm.report.synthesize import compute_flow_table, render_report
+from srm.signals.cycle import compute_cycle_position
 from srm.signals.risk import compute_risk_appetite
 from srm.signals.rrg import compute_rrg
 
+FRED_CACHE_DIR = ".cache/fred"
+
 
 def collect_tickers(cfg: Config) -> list[str]:
-    """리포트 계산에 필요한 모든 티커(벤치마크/섹터/위험선호 페어/거시) 목록."""
+    """리포트 계산에 필요한 모든 티커(벤치마크/섹터/위험선호 페어/거시) 목록.
+
+    FRED/DBnomics 선행지표는 yfinance 티커가 아니므로 여기 포함하지 않는다.
+    """
     tickers = {cfg.benchmark}
     tickers.update(cfg.sectors)
     for num, den in cfg.risk_pairs.values():
@@ -29,6 +38,49 @@ def collect_tickers(cfg: Config) -> list[str]:
         tickers.add(den)
     tickers.update(cfg.macro)
     return sorted(tickers)
+
+
+def _load_indicators(cfg: Config, args: argparse.Namespace) -> pd.DataFrame:
+    """선행지표 패널 로드: 캐시 → FRED(키 필요) + DBnomics(키 불필요) 다운로드.
+
+    어떤 실패도 예외로 전파하지 않는다 — 빈 DataFrame이면 사이클 섹션만 생략된다.
+    """
+    ids = sorted(set(cfg.fred_series) | set(cfg.fred_dbnomics))
+    period = f"{cfg.fred_period_years}y"
+
+    if not args.no_cache and not args.refresh:
+        cached = load_cached_prices(ids, period, "fred", cache_dir=FRED_CACHE_DIR)
+        if cached is not None:
+            print("[캐시] 저장된 선행지표 데이터 사용")
+            return cached
+
+    fred_df = fetch_fred_series(cfg.fred_series, cfg.fred_period_years)
+    db_df = fetch_dbnomics_series(cfg.fred_dbnomics)
+    indicators = pd.concat([fred_df, db_df], axis=1)
+    if not args.no_cache and not indicators.empty:
+        save_prices(indicators, ids, period, "fred", cache_dir=FRED_CACHE_DIR)
+    return indicators
+
+
+def _compute_cycle(cfg: Config, indicators: pd.DataFrame | None) -> dict | None:
+    """선행지표 → 사이클 위치. 데이터가 없거나 처리에 실패하면 None(안전 degrade)."""
+    if indicators is None or indicators.empty:
+        return None
+    try:
+        kept, stale = drop_stale_series(indicators, cfg.fred_stale_months)
+        if stale:
+            print(f"[사이클] 갱신 정체로 판정에서 제외된 지표: {', '.join(stale)}")
+        meta = {**cfg.fred_series, **cfg.fred_dbnomics}
+        return compute_cycle_position(
+            kept,
+            meta,
+            trend_window=cfg.cycle_trend_window,
+            level_window=cfg.cycle_level_window,
+            min_indicators=cfg.cycle_min_indicators,
+        )
+    except Exception as e:
+        print(f"[사이클] 선행지표 처리 실패, 사이클 섹션 생략: {e}")
+        return None
 
 
 def main() -> None:
@@ -63,6 +115,8 @@ def main() -> None:
     if args.from_snapshot:
         prices, meta = load_snapshot(args.from_snapshot)
         print(f"[스냅샷] {args.from_snapshot} 사용 (저장 시각 {meta.get('timestamp', '?')})")
+        # 스냅샷에 선행지표가 함께 저장돼 있으면 사이클 섹션까지 재현된다.
+        indicators = load_snapshot_frame(args.from_snapshot, "indicators")
     else:
         prices = None
         if not args.no_cache and not args.refresh:
@@ -80,14 +134,27 @@ def main() -> None:
             if not args.no_cache:
                 save_prices(prices, tickers, args.period, args.interval)
 
+        indicators = None
+        if cfg.fred_series or cfg.fred_dbnomics:
+            indicators = _load_indicators(cfg, args)
+
         if not args.no_snapshot:
-            save_snapshot(
-                prices, {"period": args.period, "interval": args.interval, "tickers": tickers}
+            extra = (
+                {"indicators": indicators}
+                if indicators is not None and not indicators.empty
+                else None
             )
+            save_snapshot(
+                prices,
+                {"period": args.period, "interval": args.interval, "tickers": tickers},
+                extra_frames=extra,
+            )
+
+    cycle = _compute_cycle(cfg, indicators)
 
     flow_table = compute_flow_table(prices, cfg)
     risk = compute_risk_appetite(prices, cfg.risk_pairs, cfg.risk_ma, cfg.risk_on, cfg.risk_off)
-    print(render_report(flow_table, risk, prices, cfg, args.interval))
+    print(render_report(flow_table, risk, prices, cfg, args.interval, cycle=cycle))
 
     if args.plot and not flow_table.empty:
         rrg = compute_rrg(prices, cfg.benchmark, list(cfg.sectors), cfg.rs_window, cfg.mom_window)
@@ -101,7 +168,7 @@ def main() -> None:
             for fmt in args.export:
                 if fmt == "json":
                     payload = build_export_payload(
-                        flow_table, risk, cfg, args.interval, generated_at
+                        flow_table, risk, cfg, args.interval, generated_at, cycle=cycle
                     )
                     path = export_json(payload, "flow_table.json")
                 else:

@@ -12,6 +12,7 @@ from pathlib import Path
 import pandas as pd
 
 from srm.config import Config
+from srm.report.synthesize import CYCLE_LIMITATION
 
 
 def build_export_payload(
@@ -20,8 +21,13 @@ def build_export_payload(
     cfg: Config,
     interval: str,
     generated_at: str,
+    cycle: dict | None = None,
 ) -> dict:
-    """랭킹표 + 국면/점수/면책 메타를 하나의 dict로 묶는다(JSON 내보내기용)."""
+    """랭킹표 + 국면/점수/면책 메타를 하나의 dict로 묶는다(JSON 내보내기용).
+
+    cycle(경기 사이클 위치)은 없으면 null로 내보낸다. 있으면 선행지표의
+    발표지연/개정 한계 문구(note)를 함께 담는다.
+    """
     return {
         "generated_at": generated_at,
         "interval": interval,
@@ -30,6 +36,7 @@ def build_export_payload(
         "score": risk["score"],
         "max_score": risk["max"],
         "details": risk["details"],
+        "cycle": None if cycle is None else {**cycle, "note": CYCLE_LIMITATION},
         "ranking": flow_table.to_dict("records"),
         "disclaimer": cfg.disclaimer.strip(),
     }

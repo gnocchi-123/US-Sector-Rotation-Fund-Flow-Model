@@ -86,6 +86,41 @@ def test_build_export_payload_schema():
     assert payload["disclaimer"].strip() != ""
 
 
+def _sample_cycle() -> dict:
+    return {
+        "phase": "Expansion",
+        "description": "선행지표가 역사 대비 높은 수준에서 개선을 유지 중인 상태",
+        "counted": 3,
+        "level_score": 0.42,
+        "direction_score": 2,
+        "details": {"Indicator A": "up / 수준 z=+0.85 (마지막 관측 2026-05-31)"},
+    }
+
+
+def test_build_export_payload_cycle_none_is_null():
+    payload = build_export_payload(
+        _sample_flow_table(), _sample_risk(), _sample_config(), "1wk", "2026-06-10T00:00:00+00:00"
+    )
+    assert payload["cycle"] is None
+
+
+def test_build_export_payload_cycle_with_limitation_note():
+    payload = build_export_payload(
+        _sample_flow_table(),
+        _sample_risk(),
+        _sample_config(),
+        "1wk",
+        "2026-06-10T00:00:00+00:00",
+        cycle=_sample_cycle(),
+    )
+    cycle = payload["cycle"]
+    assert cycle["phase"] == "Expansion"
+    assert cycle["counted"] == 3
+    assert cycle["note"].strip() != ""  # 발표지연/개정 한계 문구
+    # JSON 직렬화 가능해야 한다.
+    json.dumps(payload, ensure_ascii=False)
+
+
 def test_export_json_roundtrip(tmp_path):
     cfg = _sample_config()
     flow_table = _sample_flow_table()
