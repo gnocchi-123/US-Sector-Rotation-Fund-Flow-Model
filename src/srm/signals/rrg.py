@@ -49,10 +49,13 @@ def compute_rrg(
 ) -> pd.DataFrame:
     """종목별 최신 RS-Ratio/RS-Momentum/4분면을 계산한다.
 
-    `prices`에 없는 티커나, 윈도우가 부족해 NaN인 티커는 결과에서 제외한다
-    (예외 대신 안전하게 degrade). 반환 DataFrame은 ticker를 인덱스로 하며
-    `_ratio_series`/`_mom_series`에 전체 시계열을 담아 차트 렌더에 재사용한다.
+    `prices`에 없는 티커나, 윈도우가 부족해 NaN인 티커는 결과에서 제외하고,
+    벤치마크 자체가 없으면 빈 DataFrame을 반환한다(예외 대신 안전하게 degrade).
+    반환 DataFrame은 ticker를 인덱스로 하며 `_ratio_series`/`_mom_series`에
+    전체 시계열을 담아 차트 렌더에 재사용한다.
     """
+    if benchmark not in prices.columns:
+        return pd.DataFrame()
     bench = prices[benchmark]
     rows = []
     for tkr in members:
