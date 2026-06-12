@@ -294,7 +294,22 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
         상승(65%→78%). 현행 14는 중간(70%, 절대 휩소 수 최소 구간).
       - `pytest -q` 143개 통과.
 
+- [x] C9. `feat: trend_gate default decision (M4 완료)` — **사용자 확정(2026-06-12)**
+      ① trend_gate 기본값 **OFF 유지** — 실측상 게이트가 부호 휩소율을 77~79%→81%로
+        올려 안정성 개선 근거 없음. ② ON 시 강등 규칙 **contradiction_only 채택** —
+        모순 조합(Leading+Downtrend, Weakening/Lagging+Uptrend)만 0점 강등,
+        Improving은 항상 제외. 단일 정의는 `backtest/whipsaw.py`의 `apply_gate`이며
+        `compute_flow_score`가 trend_gate ON일 때 이를 호출. ③ RRG 윈도우 **14 유지**
+        — 스윕상 균형점(짧으면 전환 과다, 길면 휩소율 상승).
+      — 반영: `config.yaml`(trend_gate 주석에 실측 근거), `CLAUDE.md` 결정 3,
+        `00_PROJECT_SPEC.md`(Layer 3/종합/로드맵), `tests/test_synthesize.py`의
+        토글 테스트를 새 규칙으로 의도적 갱신(Improving 비강등 단언 유지).
+      — `M4_PLAN.md` 삭제(결정의 영구 기록은 CLAUDE.md/스펙/이 파일로 이관).
+      - `pytest -q` 144개 통과.
+
+**M4 완료.** ROADMAP.md의 백테스트 훅/휩소 리포트/게이트·윈도우 확정 모두 반영됨.
+
 ## 다음 작업
 
-1. M4 C9: 실측 표를 근거로 사용자와 trend_gate 기본값/강등 규칙/윈도우 확정 →
-   CLAUDE.md 결정 3/스펙/config 주석 반영, M4_PLAN.md 삭제.
+1. (M1~M3 리뷰 잔여 이월) 캐시/스냅샷 정리 정책, risk_pairs 형식 검증.
+2. 마일스톤 M1~M4 완료 — 이후 작업은 새 요구사항 발생 시 스펙/ROADMAP 갱신부터.

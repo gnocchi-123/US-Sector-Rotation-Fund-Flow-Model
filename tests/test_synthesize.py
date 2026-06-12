@@ -62,19 +62,38 @@ def test_flow_score_rotation_ordering(cfg):
     assert up > flat > down
 
 
-def test_flow_score_trend_gate_toggle_is_identical_in_m1(cfg):
-    """결정 3: trend_gate는 토글만 존재하고 M1~M3에서는 ON/OFF 점수가 동일하다.
+# 결정 3(M4 확정)의 모순 조합 — backtest/whipsaw.py의 _CONTRADICTIONS와 동일 정의.
+_CONTRADICTIONS = {
+    ("Leading", "Downtrend"),
+    ("Weakening", "Uptrend"),
+    ("Lagging", "Uptrend"),
+}
 
-    M4에서 강등 규칙이 들어가면 이 테스트를 의도적으로 갱신해야 한다
-    (그때도 Improving 분면은 강등하지 않아야 함).
+
+def test_flow_score_trend_gate_default_off_in_repo_config(cfg):
+    """결정 3(M4 실측 확정): 레포 config의 trend_gate 기본값은 OFF다."""
+    assert cfg.trend_gate is False
+
+
+def test_flow_score_trend_gate_on_demotes_only_contradictions(cfg):
+    """결정 3(M4 확정): ON이면 contradiction_only — 모순 조합만 0점, 나머지는 동일.
+
+    Improving 분면은 어떤 조합에서도 강등하지 않는다(이른 신호 보호).
     """
     gated = dataclasses.replace(cfg, trend_gate=True)
     for quadrant in ["Improving", "Leading", "Weakening", "Lagging"]:
         for mom_delta in (1.0, -1.0, 0.0):
             for trend in ["Uptrend", "Neutral", "Downtrend", "n/a"]:
-                assert compute_flow_score(quadrant, mom_delta, trend, cfg) == (
-                    compute_flow_score(quadrant, mom_delta, trend, gated)
-                )
+                plain = compute_flow_score(quadrant, mom_delta, trend, cfg)
+                on = compute_flow_score(quadrant, mom_delta, trend, gated)
+                if (quadrant, trend) in _CONTRADICTIONS:
+                    assert on == 0.0
+                else:
+                    assert on == plain
+    # Improving 비강등을 명시적으로 한 번 더 단언한다.
+    assert compute_flow_score("Improving", 1.0, "Downtrend", gated) == (
+        compute_flow_score("Improving", 1.0, "Downtrend", cfg)
+    )
 
 
 def test_flow_table_ranking_and_consistency(price_panel, panel_cfg):

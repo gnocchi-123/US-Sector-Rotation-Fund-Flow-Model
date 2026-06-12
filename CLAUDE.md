@@ -45,11 +45,15 @@
 2. **종합 점수 = quad_flow + rotation 부호 + trend.** 가중치 수치는 `config.yaml`의 `weights`이며
    프로토타입 값을 초기값으로 둔다. `quad_flow`의 **Improving(+2) > Leading(+1)** 은 "막 유입이
    시작된 이른 신호를 더 높게 친다"는 의도된 편향이다(모멘텀 추종 아님). config 주석에 이 의도를 명시할 것.
-3. **추세 게이트(`weights.trend_gate`)는 기본 OFF**(프로토타입과 동일, 단순 가중합).
-   - 게이트를 토글로 구현하되, ON이어도 **Improving 분면은 강등하지 않는다**(이른 신호라 추세가
-     아직 Downtrend인 게 정상). 단순 "Downtrend면 양수 점수 0" 식의 일괄 강등은 쓰지 않는다.
-   - 게이트 기본값 채택과 강등 규칙 확정은 **M4의 휩소 리포트로 실측한 뒤** 결정한다. M1에서는
-     토글만 만들고 OFF로 둔다.
+3. **추세 게이트(`weights.trend_gate`)는 기본 OFF** — M4 휩소 실측으로 확정(2026-06).
+   - 실측 근거(주봉 2y/5y, `--backtest`로 재실측 가능): 게이트가 FlowScore 부호 휩소율을
+     77~79% → 81%로 오히려 올려 안정성 개선 근거가 없었다. RRG 윈도우(rs/mom=14)도
+     스윕 결과(8: 65%/전환 과다 ~ 26: 78%) 균형점이라 유지로 확정.
+   - ON이면 **contradiction_only** 규칙: 분면과 추세가 정반대인 모순 조합
+     (Leading+Downtrend, Weakening/Lagging+Uptrend)만 점수를 0으로 강등한다.
+     규칙의 단일 정의는 `backtest/whipsaw.py`의 `apply_gate`.
+   - ON이어도 **Improving 분면은 강등하지 않는다**(이른 신호라 추세가 아직 Downtrend인 게
+     정상). 단순 "Downtrend면 양수 점수 0" 식의 일괄 강등은 쓰지 않는다.
 
 ## 작업 방식
 - **프로토타입 `sector_rotation_model.py`의 검증된 계산 로직을 출발점으로 삼는다.

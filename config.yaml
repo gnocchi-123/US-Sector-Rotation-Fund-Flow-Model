@@ -74,9 +74,12 @@ weights:
     Downtrend: -1
     "n/a": 0
 
-  # 추세 게이트 토글. 기본 OFF(프로토타입과 동일한 단순 가중합).
-  # ON이어도 Improving 분면은 강등하지 않는다(이른 신호라 추세가 Downtrend인 게 정상, 결정 3).
-  # 게이트 기본값 채택과 강등 규칙 확정은 M4의 휩소 실측 이후로 미룬다.
+  # 추세 게이트 토글 (결정 3 — M4 휩소 실측으로 확정, 2026-06).
+  # 기본 OFF: 실측(주봉 2y/5y)에서 게이트가 FlowScore 부호 휩소율을 77~79% -> 81%로
+  # 오히려 올려, 안정성 개선 근거가 없었다(--backtest로 재실측 가능).
+  # ON이면 contradiction_only 규칙: 분면과 추세가 정반대인 모순 조합
+  # (Leading+Downtrend, Weakening/Lagging+Uptrend)만 점수를 0으로 강등한다.
+  # Improving 분면은 항상 강등 제외 — 이른 신호라 추세가 아직 Downtrend인 게 정상.
   trend_gate: false
 
 data:

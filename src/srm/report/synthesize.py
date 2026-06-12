@@ -1,10 +1,12 @@
 # 종합 점수 계산 + 텍스트 보고서 렌더.
 #
 # 종합 점수 = quad_flow + rotation(부호) + trend (CLAUDE.md 결정 2).
-# weights.trend_gate 토글은 config.yaml에서 읽지만, M1에서는 ON/OFF 모두 동일한
-# 단순 가중합이다. ON일 때의 강등 규칙은 M4에서 휩소 실측 후 확정한다(결정 3).
-# 강등 자체가 아직 없으므로 "Improving 분면은 강등하지 않는다"는 제약은 자동으로
-# 만족된다.
+# weights.trend_gate(결정 3, M4 휩소 실측으로 확정):
+#   - 기본 OFF — 실측(주봉 2y/5y)에서 게이트가 FlowScore 부호 휩소율을
+#     77~79% -> 81%로 오히려 올려, 안정성 개선 근거가 없었다.
+#   - ON이면 contradiction_only 규칙: 분면과 추세가 정반대인 모순 조합만 점수를
+#     0으로 강등한다. Improving 분면은 항상 제외(이른 신호라 추세가 아직
+#     Downtrend인 게 정상). 규칙의 단일 정의는 backtest/whipsaw.py의 apply_gate.
 #
 # 이 모듈의 신호/점수는 모두 '현재 상태 확인'이며, 미래 방향을 단정하지 않는다.
 # 흐름/순환 데이터는 후행적일 수 있다.
@@ -13,6 +15,7 @@ from __future__ import annotations
 
 import pandas as pd
 
+from srm.backtest.whipsaw import apply_gate
 from srm.config import Config
 from srm.signals.rrg import compute_rrg
 from srm.signals.trend import trend_state
@@ -47,8 +50,8 @@ CYCLE_LIMITATION = (
 def compute_flow_score(quadrant: str, mom_delta: float, trend: str, cfg: Config) -> float:
     """종합 점수 = quad_flow + rotation(부호) + trend (결정 2).
 
-    cfg.trend_gate는 M1에서 토글만 존재하며 ON/OFF 모두 이 단순 가중합과 동일하다.
-    ON일 때의 강등 규칙은 M4 휩소 실측 후 결정한다(결정 3).
+    cfg.trend_gate가 ON이면 contradiction_only 규칙으로 모순 조합만 0점 강등한다
+    (결정 3, M4 실측으로 확정 — 기본 OFF, Improving은 항상 강등 제외).
     """
     if mom_delta > 0:
         rotate = cfg.rotation["up"]
@@ -57,7 +60,10 @@ def compute_flow_score(quadrant: str, mom_delta: float, trend: str, cfg: Config)
     else:
         rotate = cfg.rotation["flat"]
     trend_score = cfg.trend.get(trend, 0.0)
-    return cfg.quad_flow[quadrant] + rotate + trend_score
+    score = cfg.quad_flow[quadrant] + rotate + trend_score
+    if cfg.trend_gate:
+        score = apply_gate(quadrant, trend, score, rule="contradiction_only")
+    return score
 
 
 def compute_flow_table(
