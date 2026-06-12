@@ -72,6 +72,20 @@ def test_load_config_without_fred_cycle_sections(tmp_path):
     assert cfg.cycle_min_indicators == 2
 
 
+def test_load_config_optional_lookbacks_default_and_parse(tmp_path):
+    """windows.risk_slope/macro_lookback — 없으면 프로토타입 값 5, 있으면 파싱(M4)."""
+    cfg = load_config(_write(tmp_path, _minimal_raw()))
+    assert cfg.risk_slope == 5
+    assert cfg.macro_lookback == 5
+
+    raw = _minimal_raw()
+    raw["windows"]["risk_slope"] = 3
+    raw["windows"]["macro_lookback"] = 8
+    cfg = load_config(_write(tmp_path, raw))
+    assert cfg.risk_slope == 3
+    assert cfg.macro_lookback == 8
+
+
 def test_load_config_parses_fred_cycle_sections(tmp_path):
     raw = _minimal_raw()
     raw["fred"] = {

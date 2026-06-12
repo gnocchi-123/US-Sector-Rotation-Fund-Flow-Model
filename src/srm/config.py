@@ -51,6 +51,10 @@ class Config:
 
     disclaimer: str
 
+    # --- M4 옵션 윈도우 (config.yaml에 없으면 프로토타입 값 5 — 하위호환) ---
+    risk_slope: int = 5
+    macro_lookback: int = 5
+
     # --- M3 옵션 섹션 (config.yaml에 없으면 빈 값/기본값 — 사이클 분석을 건너뛴다) ---
     fred_series: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
     fred_dbnomics: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
@@ -142,6 +146,8 @@ def load_config(path: str | Path | None = None) -> Config:
         risk_ma=int(windows["risk_ma"]),
         trend_fast=int(windows["trend_fast"]),
         trend_slow=int(windows["trend_slow"]),
+        risk_slope=int(windows.get("risk_slope", 5)),
+        macro_lookback=int(windows.get("macro_lookback", 5)),
         quad_flow=dict(weights["quad_flow"]),
         rotation=dict(weights["rotation"]),
         trend=dict(weights["trend"]),

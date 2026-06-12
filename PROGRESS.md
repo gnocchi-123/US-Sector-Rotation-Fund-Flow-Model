@@ -227,6 +227,15 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
       — `tests/test_rrg.py` +2건: rs_series↔compute_rrg 마지막 값 일치, 누락 시 None.
       - `pytest -q` 117개 통과(기존 테스트 무변경 회귀 가드).
 
+- [x] C2. `refactor(config): externalize remaining hardcoded lookbacks`
+      — `config.yaml` `windows`에 `risk_slope: 5`/`macro_lookback: 5`(프로토타입
+        iloc[-5] 그대로, 의미 주석). `config.py`는 옵션 필드(기본 5, 하위호환 —
+        dataclass 기본값 순서 제약으로 M3 옵션 섹션 앞에 배치).
+      — `risk.py`: `ratio_score(..., slope=5)`/`compute_risk_appetite(..., slope=5)`,
+        `synthesize.py` [4] 라벨을 실제 의미("N-1봉 전 대비")로 정정, `cli.py` 연결.
+      — 테스트 +2건: config 기본값/파싱, ratio_score slope 파라미터화(0 vs -1).
+      - `pytest -q` 119개 통과.
+
 ## 다음 작업
 
-1. M4 계속: C2(하드코딩 lookback 외부화)부터 `M4_PLAN.md` 체크리스트 순서대로.
+1. M4 계속: C3(backtest config 섹션)부터 `M4_PLAN.md` 체크리스트 순서대로.

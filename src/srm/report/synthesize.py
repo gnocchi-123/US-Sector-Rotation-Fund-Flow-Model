@@ -134,12 +134,14 @@ def render_report(
             names = ", ".join(f"{r.Sector}({r.Ticker})" for r in sub.itertuples())
             lines.append(f"  · {label}: {names}")
 
-    lines.append("\n[4] 거시 참고 (최근 5봉 변화, 후행 지표)")
+    # macro_lookback=N이면 마지막 봉을 마지막에서 N번째 봉(= N-1봉 전)과 비교한다.
+    look = cfg.macro_lookback
+    lines.append(f"\n[4] 거시 참고 ({look - 1}봉 전 대비 변화, 후행 지표)")
     for tkr, label in cfg.macro.items():
         if tkr in prices.columns:
             s = prices[tkr].dropna()
-            if len(s) > 6:
-                pct = (s.iloc[-1] / s.iloc[-5] - 1) * 100
+            if len(s) > look + 1:
+                pct = (s.iloc[-1] / s.iloc[-look] - 1) * 100
                 lines.append(f"     - {label:<10}({tkr:<6}): {pct:+.2f}%")
 
     lines.append("\n[5] 경기 사이클 위치 (선행지표 합의, 참고용 맥락)")

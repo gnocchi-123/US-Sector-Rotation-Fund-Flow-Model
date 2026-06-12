@@ -33,6 +33,18 @@ def test_ratio_score_missing_or_insufficient_data():
     assert ratio_score(short, "A", "B", ma=5) is None
 
 
+def test_ratio_score_slope_lookback_is_parameterized():
+    # 장기 상승 후 최근 급락한 비율: 이동평균이 '긴 lookback 대비'로는 아직 상승(혼조=0),
+    # '짧은 lookback 대비'로는 하락(risk-off=-1) — slope 인자가 판정을 바꾼다.
+    idx = pd.date_range("2024-01-01", periods=10, freq="D")
+    panel = pd.DataFrame(
+        {"A": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 6.0, 4.0], "B": np.ones(10)},
+        index=idx,
+    )
+    assert ratio_score(panel, "A", "B", ma=3, slope=5) == 0
+    assert ratio_score(panel, "A", "B", ma=3, slope=2) == -1
+
+
 def test_compute_risk_appetite_thresholds(price_panel: pd.DataFrame):
     risk_on_pairs = {"a": ("UP1", "BENCH"), "b": ("UP2", "BENCH")}
     risk_off_pairs = {"a": ("DOWN1", "BENCH"), "b": ("DOWN2", "BENCH")}

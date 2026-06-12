@@ -32,10 +32,10 @@ M1부터 보류해 온 두 가지를 **근거를 갖고 확정**한다:
 - [x] 테스트: 기존 RRG/synthesize 테스트가 회귀 가드(변경 없이 통과해야 함) + rs_series 단위테스트 2~3건.
 
 ### C2. `refactor(config): externalize remaining hardcoded lookbacks`
-- [ ] `config.yaml` `windows`에 `risk_slope: 5`(risk.py의 `sma.iloc[-5]` 기울기 lookback),
+- [x] `config.yaml` `windows`에 `risk_slope: 5`(risk.py의 `sma.iloc[-5]` 기울기 lookback),
       `macro_lookback: 5`(synthesize [4]의 `iloc[-5]`) 추가 — 프로토타입 값 그대로, 의미 주석.
-- [ ] `risk.py`/`synthesize.py`/`config.py`에 파라미터로 연결. [4] 라벨을 실제 의미("N봉 전 대비")로 정정.
-- [ ] 테스트: config 파싱 + ratio_score lookback 파라미터화 검증.
+- [x] `risk.py`/`synthesize.py`/`config.py`에 파라미터로 연결. [4] 라벨을 실제 의미("N봉 전 대비")로 정정.
+- [x] 테스트: config 파싱 + ratio_score lookback 파라미터화 검증.
 
 ### C3. `feat(config): backtest options section`
 - [ ] `config.yaml`에 옵션 섹션(`fred:`와 같은 방식 — `_REQUIRED_KEYS` 불변, 없으면 기본값):

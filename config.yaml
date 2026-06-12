@@ -40,9 +40,15 @@ windows:
   mom_window: 14
   # Layer 2 (위험선호): 비율 페어 추세 판정용 이동평균
   risk_ma: 20
+  # Layer 2: 이동평균 '기울기' 판정 lookback — sma 마지막 값을 마지막에서 N번째 값
+  # (= N-1봉 전)과 비교한다. 프로토타입의 iloc[-5] 그대로.
+  risk_slope: 5
   # Layer 3 (추세): 1차 추세 판정용 단/장기 이동평균
   trend_fast: 50
   trend_slow: 200
+  # [4] 거시 참고의 변화율 lookback — 마지막 봉을 마지막에서 N번째 봉(= N-1봉 전)과
+  # 비교한다. 프로토타입의 iloc[-5] 그대로.
+  macro_lookback: 5
 
 weights:
   # 종합 점수 = quad_flow + rotation 부호 + trend (결정 2)

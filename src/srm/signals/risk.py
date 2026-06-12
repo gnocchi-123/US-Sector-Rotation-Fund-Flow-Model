@@ -6,22 +6,26 @@ from __future__ import annotations
 import pandas as pd
 
 
-def ratio_score(prices: pd.DataFrame, num: str, den: str, ma: int = 20) -> int | None:
+def ratio_score(
+    prices: pd.DataFrame, num: str, den: str, ma: int = 20, slope: int = 5
+) -> int | None:
     """비율 페어(num/den)의 추세 점수.
 
     이동평균 위 + 이동평균 자체가 상승 중 -> +1(risk-on)
     이동평균 아래 + 이동평균 하락 중 -> -1(risk-off)
     그 외(혼조) -> 0
     데이터가 부족하거나 티커가 없으면 None.
+    `slope`는 이동평균 기울기 판정 lookback — 마지막 값을 마지막에서 slope번째 값
+    (= slope-1봉 전)과 비교한다(config.yaml windows.risk_slope).
     """
     if num not in prices.columns or den not in prices.columns:
         return None
     ratio = (prices[num] / prices[den]).dropna()
-    if len(ratio) < ma + 5:
+    if len(ratio) < ma + slope:
         return None
     sma = ratio.rolling(ma).mean()
     above = ratio.iloc[-1] > sma.iloc[-1]
-    up = sma.iloc[-1] > sma.iloc[-5]
+    up = sma.iloc[-1] > sma.iloc[-slope]
     if above and up:
         return 1
     if (not above) and (not up):
@@ -35,6 +39,7 @@ def compute_risk_appetite(
     ma: int = 20,
     risk_on: float = 2,
     risk_off: float = -2,
+    slope: int = 5,
 ) -> dict:
     """페어별 점수를 합산해 위험선호 국면을 상태 서술로 판정한다.
 
@@ -45,7 +50,7 @@ def compute_risk_appetite(
     total = 0
     counted = 0
     for name, (num, den) in pairs.items():
-        s = ratio_score(prices, num, den, ma)
+        s = ratio_score(prices, num, den, ma, slope)
         if s is None:
             details[name] = "n/a"
             continue
