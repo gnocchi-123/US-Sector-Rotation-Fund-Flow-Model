@@ -253,6 +253,18 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
         일치(분면 자체 비단언 — M1 교훈), 결측 사이 동일 라벨 비전환, degrade.
       - `pytest -q` 126개 통과.
 
+- [x] C5. `feat(backtest): whipsaw metrics + trend-gate candidate comparison`
+      — 신규 `src/srm/backtest/whipsaw.py`: `whipsaw_rate`(전환 후 horizon봉 내
+        직전 라벨 복귀 비율, per_ticker/total, 전환 0건은 None — NaN 금지),
+        `apply_gate`(후보 규칙 none/contradiction_only — 모순 조합
+        Leading+Downtrend/Weakening+Uptrend/Lagging+Uptrend만 0 강등,
+        **Improving은 항상 제외**), `score_sign_stability`(FlowScore 부호
+        pos/zero/neg 시계열의 휩소율을 규칙별 비교; rotation 성분은 모멘텀
+        시계열이 필요한 ±0.5 보조 신호라 제외 — 주석 명시).
+      — `tests/test_whipsaw.py` 10건: 전환·복귀 비율, horizon 경계, 결측 건너뜀,
+        Improving 비강등, 미지 규칙 ValueError, 규칙별 차이 발생, degrade.
+      - `pytest -q` 136개 통과.
+
 ## 다음 작업
 
-1. M4 계속: C5(whipsaw.py)부터 `M4_PLAN.md` 체크리스트 순서대로.
+1. M4 계속: C6(sweep.py)부터 `M4_PLAN.md` 체크리스트 순서대로.

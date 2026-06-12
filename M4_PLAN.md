@@ -61,7 +61,7 @@ M1부터 보류해 온 두 가지를 **근거를 갖고 확정**한다:
       **모멘텀 분면 자체는 단언 금지(M1 교훈)** — 좌우 반면·일관성만.
 
 ### C5. `feat(backtest): whipsaw metrics + trend-gate candidate comparison`
-- [ ] 신규 `src/srm/backtest/whipsaw.py`:
+- [x] 신규 `src/srm/backtest/whipsaw.py`:
   - `whipsaw_rate(history: pd.DataFrame, horizon: int) -> dict`
     — 분면 전환이 horizon봉 내 직전 분면으로 복귀한 비율. 반환:
     `{"per_ticker": {tkr: {"transitions": n, "whipsaws": k, "rate": k/n}}, "total": {...}}`.
@@ -71,7 +71,7 @@ M1부터 보류해 온 두 가지를 **근거를 갖고 확정**한다:
     Uptrend 같은 모순 조합만 점수 0으로 강등. Improving은 항상 제외** — 결정 3 제약).
   - `score_sign_stability(quadrant_hist, trend_hist_by_ticker, weights, horizon, rule) -> dict`
     — 시점별 FlowScore 부호 시계열을 만들고 부호 플립의 휩소율을 규칙별 비교.
-- [ ] 테스트: 인위적 전환·복귀 패턴으로 비율 검증, Improving 비강등 단언, 규칙별 차이 발생 케이스.
+- [x] 테스트: 인위적 전환·복귀 패턴으로 비율 검증, Improving 비강등 단언, 규칙별 차이 발생 케이스.
 
 ### C6. `feat(backtest): window sweep`
 - [ ] 신규 `src/srm/backtest/sweep.py`:
