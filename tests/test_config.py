@@ -119,6 +119,31 @@ def test_load_config_parses_fred_cycle_sections(tmp_path):
     assert cfg.phase_sectors["Recovery"] == ("XLY", "XLF")
 
 
+@pytest.mark.parametrize(
+    "bad_pair",
+    [
+        ["IWM"],  # 티커 1개
+        ["IWM", "SPY", "QQQ"],  # 티커 3개
+        "IWM/SPY",  # 리스트가 아님
+        [None, "SPY"],  # 문자열이 아님
+        ["", "SPY"],  # 빈 문자열
+    ],
+)
+def test_load_config_rejects_malformed_risk_pairs(tmp_path, bad_pair):
+    """risk_pairs 항목은 [분자, 분모] 두 티커 문자열 — 아니면 명확한 ConfigError."""
+    raw = _minimal_raw()
+    raw["tickers"]["risk_pairs"]["Broken"] = bad_pair
+    with pytest.raises(ConfigError, match="risk_pairs"):
+        load_config(_write(tmp_path, raw))
+
+
+def test_load_config_rejects_non_mapping_risk_pairs(tmp_path):
+    raw = _minimal_raw()
+    raw["tickers"]["risk_pairs"] = [["IWM", "SPY"]]  # dict가 아니라 list
+    with pytest.raises(ConfigError, match="risk_pairs"):
+        load_config(_write(tmp_path, raw))
+
+
 def test_load_config_backtest_section_default_and_parse(tmp_path):
     """backtest 옵션 섹션 — 없으면 기본값, 있으면 파싱(M4, 하위호환)."""
     cfg = load_config(_write(tmp_path, _minimal_raw()))

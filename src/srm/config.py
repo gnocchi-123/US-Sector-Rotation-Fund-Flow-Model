@@ -84,6 +84,28 @@ def _require(raw: Mapping[str, Any], top: str, sub_keys: tuple[str, ...]) -> Map
     return section
 
 
+def _parse_risk_pairs(section: Any) -> dict[str, tuple[str, str]]:
+    """tickers.risk_pairs 파싱 — 각 항목은 [분자, 분모] 두 티커 문자열이어야 한다.
+
+    형식이 틀리면 IndexError 같은 불친절한 예외 대신 명확한 ConfigError로 실패한다.
+    """
+    if not isinstance(section, Mapping):
+        raise ConfigError("config.yaml의 'tickers.risk_pairs'은(는) 매핑(dict)이어야 합니다.")
+    out: dict[str, tuple[str, str]] = {}
+    for name, pair in section.items():
+        if (
+            not isinstance(pair, (list, tuple))
+            or len(pair) != 2
+            or not all(isinstance(t, str) and t.strip() for t in pair)
+        ):
+            raise ConfigError(
+                f"config.yaml의 'tickers.risk_pairs.{name}'은(는) [분자, 분모] 형식의 "
+                f"티커 문자열 2개여야 합니다 (현재: {pair!r})."
+            )
+        out[str(name)] = (pair[0], pair[1])
+    return out
+
+
 _VALID_HIGHER_IS = ("expansion", "contraction")
 
 
@@ -131,7 +153,7 @@ def load_config(path: str | Path | None = None) -> Config:
     data = raw["data"]
     thresholds = raw["thresholds"]
 
-    risk_pairs = {name: (pair[0], pair[1]) for name, pair in tickers["risk_pairs"].items()}
+    risk_pairs = _parse_risk_pairs(tickers["risk_pairs"])
 
     # M4 백테스트 옵션 섹션 — 없으면 기본값으로 동작한다.
     backtest = raw.get("backtest") or {}

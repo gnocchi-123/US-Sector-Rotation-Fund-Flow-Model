@@ -309,7 +309,15 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
 
 **M4 완료.** ROADMAP.md의 백테스트 훅/휩소 리포트/게이트·윈도우 확정 모두 반영됨.
 
+## M4 후속 — 리뷰 잔여 이월 항목 정리
+
+- [x] 1. `feat(config): validate risk_pairs format`
+      — `config.py`: `_parse_risk_pairs` — 각 항목이 [분자, 분모] 티커 문자열
+        2개인지 검증, 아니면 IndexError 대신 명확한 ConfigError.
+      — `tests/test_config.py` +6건: 길이/타입/빈 문자열/비매핑 케이스.
+      - `pytest -q` 150개 통과.
+
 ## 다음 작업
 
-1. (M1~M3 리뷰 잔여 이월) 캐시/스냅샷 정리 정책, risk_pairs 형식 검증.
+1. (이월 잔여) 캐시/스냅샷 정리 정책.
 2. 마일스톤 M1~M4 완료 — 이후 작업은 새 요구사항 발생 시 스펙/ROADMAP 갱신부터.
