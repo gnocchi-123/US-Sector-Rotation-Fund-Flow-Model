@@ -17,19 +17,19 @@ M1부터 보류해 온 두 가지를 **근거를 갖고 확정**한다:
 
 ## 사전 확인 (착수 시 1회)
 
-- [ ] `git pull` 후 `pytest -q` 통과(현재 115개), `PROGRESS.md`의 "M1~M3 리뷰 보완" 절 읽기.
-- [ ] 아래 이월 항목이 커밋 C1~C2, C7에 흡수되어 있음을 인지:
+- [x] `git pull` 후 `pytest -q` 통과(현재 115개), `PROGRESS.md`의 "M1~M3 리뷰 보완" 절 읽기.
+- [x] 아래 이월 항목이 커밋 C1~C2, C7에 흡수되어 있음을 인지:
       `compute_rrg` 중복 계산(C1), risk/macro 하드코딩 lookback(C2), 사이클 z~0 칼날 경계(C7).
 
 ## 커밋 계획 (작은 커밋, 각각 pytest 통과 + PROGRESS.md 갱신)
 
 ### C1. `refactor(signals): extract rs_series + reuse rrg in cli`
-- [ ] `signals/rrg.py`: 루프 본문에서 시계열 계산을 분리 —
+- [x] `signals/rrg.py`: 루프 본문에서 시계열 계산을 분리 —
       `rs_series(prices, benchmark, ticker, rs_window, mom_window) -> tuple[pd.Series, pd.Series] | None`
       (RS-Ratio/RS-Momentum 전체 시계열; 티커/벤치마크 없으면 None). `compute_rrg`는 이를 호출(출력 불변).
-- [ ] `report/synthesize.py`: `compute_flow_table(prices, cfg, rrg=None)` — 미리 계산한 RRG 재사용 허용.
-- [ ] `cli.py`: `compute_rrg` 1회만 계산해 flow_table과 `--plot`에 공유(중복 계산 이월 항목 해소).
-- [ ] 테스트: 기존 RRG/synthesize 테스트가 회귀 가드(변경 없이 통과해야 함) + rs_series 단위테스트 2~3건.
+- [x] `report/synthesize.py`: `compute_flow_table(prices, cfg, rrg=None)` — 미리 계산한 RRG 재사용 허용.
+- [x] `cli.py`: `compute_rrg` 1회만 계산해 flow_table과 `--plot`에 공유(중복 계산 이월 항목 해소).
+- [x] 테스트: 기존 RRG/synthesize 테스트가 회귀 가드(변경 없이 통과해야 함) + rs_series 단위테스트 2~3건.
 
 ### C2. `refactor(config): externalize remaining hardcoded lookbacks`
 - [ ] `config.yaml` `windows`에 `risk_slope: 5`(risk.py의 `sma.iloc[-5]` 기울기 lookback),

@@ -40,6 +40,26 @@ def classify_quadrant(rs_ratio: float, rs_momentum: float) -> str:
     return "Improving"
 
 
+def rs_series(
+    prices: pd.DataFrame,
+    benchmark: str,
+    ticker: str,
+    rs_window: int = 14,
+    mom_window: int = 14,
+) -> tuple[pd.Series, pd.Series] | None:
+    """한 티커의 RS-Ratio/RS-Momentum 전체 시계열을 계산한다.
+
+    벤치마크나 티커가 `prices`에 없으면 None(예외 대신 안전하게 degrade).
+    compute_rrg(최신 스냅샷)와 백테스트의 분면 이력 추적이 공유하는 단일 정의다.
+    """
+    if benchmark not in prices.columns or ticker not in prices.columns:
+        return None
+    rs = 100.0 * prices[ticker] / prices[benchmark]
+    rs_ratio = _zscore_normalize(rs, rs_window)
+    rs_mom = _zscore_normalize(rs_ratio.diff(), mom_window)
+    return rs_ratio, rs_mom
+
+
 def compute_rrg(
     prices: pd.DataFrame,
     benchmark: str,
@@ -54,16 +74,12 @@ def compute_rrg(
     반환 DataFrame은 ticker를 인덱스로 하며 `_ratio_series`/`_mom_series`에
     전체 시계열을 담아 차트 렌더에 재사용한다.
     """
-    if benchmark not in prices.columns:
-        return pd.DataFrame()
-    bench = prices[benchmark]
     rows = []
     for tkr in members:
-        if tkr not in prices.columns:
+        series = rs_series(prices, benchmark, tkr, rs_window, mom_window)
+        if series is None:
             continue
-        rs = 100.0 * prices[tkr] / bench
-        rs_ratio = _zscore_normalize(rs, rs_window)
-        rs_mom = _zscore_normalize(rs_ratio.diff(), mom_window)
+        rs_ratio, rs_mom = series
         lr, lm = rs_ratio.iloc[-1], rs_mom.iloc[-1]
         if np.isnan(lr) or np.isnan(lm):
             continue

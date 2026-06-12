@@ -172,12 +172,13 @@ def main() -> None:
 
     cycle = _compute_cycle(cfg, indicators)
 
-    flow_table = compute_flow_table(prices, cfg)
+    # RRG는 1회만 계산해 랭킹표와 --plot 차트가 공유한다.
+    rrg = compute_rrg(prices, cfg.benchmark, list(cfg.sectors), cfg.rs_window, cfg.mom_window)
+    flow_table = compute_flow_table(prices, cfg, rrg=rrg)
     risk = compute_risk_appetite(prices, cfg.risk_pairs, cfg.risk_ma, cfg.risk_on, cfg.risk_off)
     print(render_report(flow_table, risk, prices, cfg, args.interval, cycle=cycle))
 
     if args.plot and not flow_table.empty:
-        rrg = compute_rrg(prices, cfg.benchmark, list(cfg.sectors), cfg.rs_window, cfg.mom_window)
         plot_rrg(rrg, tail=args.tail)
 
     if args.export:

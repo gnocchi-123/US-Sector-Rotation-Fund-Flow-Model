@@ -56,12 +56,17 @@ def compute_flow_score(quadrant: str, mom_delta: float, trend: str, cfg: Config)
     return cfg.quad_flow[quadrant] + rotate + trend_score
 
 
-def compute_flow_table(prices: pd.DataFrame, cfg: Config) -> pd.DataFrame:
+def compute_flow_table(
+    prices: pd.DataFrame, cfg: Config, rrg: pd.DataFrame | None = None
+) -> pd.DataFrame:
     """섹터별 RRG 분면 + 추세를 종합해 FlowScore 내림차순 랭킹표를 만든다.
 
-    RRG 계산에 필요한 데이터가 부족하면 빈 DataFrame을 반환한다(예외 없이 degrade).
+    `rrg`에 미리 계산한 compute_rrg 결과를 넘기면 재사용한다(차트 렌더와 공유해
+    중복 계산을 피한다). RRG 계산에 필요한 데이터가 부족하면 빈 DataFrame을
+    반환한다(예외 없이 degrade).
     """
-    rrg = compute_rrg(prices, cfg.benchmark, list(cfg.sectors), cfg.rs_window, cfg.mom_window)
+    if rrg is None:
+        rrg = compute_rrg(prices, cfg.benchmark, list(cfg.sectors), cfg.rs_window, cfg.mom_window)
     if rrg.empty:
         return rrg
 

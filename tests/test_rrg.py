@@ -6,7 +6,7 @@
 
 import pandas as pd
 
-from srm.signals.rrg import classify_quadrant, compute_rrg
+from srm.signals.rrg import classify_quadrant, compute_rrg, rs_series
 
 
 def test_classify_quadrant_boundaries():
@@ -35,3 +35,21 @@ def test_compute_rrg_rs_ratio_sign(price_panel: pd.DataFrame):
 def test_compute_rrg_returns_empty_when_no_members(price_panel: pd.DataFrame):
     rrg = compute_rrg(price_panel, "BENCH", ["NOPE1", "NOPE2"])
     assert rrg.empty
+
+
+def test_rs_series_matches_compute_rrg(price_panel: pd.DataFrame):
+    # rs_series가 단일 정의이고, compute_rrg는 그 마지막 값과 일치해야 한다.
+    series = rs_series(price_panel, "BENCH", "STRONG")
+    assert series is not None
+    rs_ratio, rs_mom = series
+    assert len(rs_ratio) == len(price_panel)
+    assert len(rs_mom) == len(price_panel)
+
+    rrg = compute_rrg(price_panel, "BENCH", ["STRONG"])
+    assert rrg.loc["STRONG", "rs_ratio"] == round(rs_ratio.iloc[-1], 2)
+    assert rrg.loc["STRONG", "rs_momentum"] == round(rs_mom.iloc[-1], 2)
+
+
+def test_rs_series_none_when_ticker_or_benchmark_missing(price_panel: pd.DataFrame):
+    assert rs_series(price_panel, "BENCH", "NOPE") is None
+    assert rs_series(price_panel, "NO_BENCH", "STRONG") is None

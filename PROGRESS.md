@@ -214,8 +214,19 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
 `compute_rrg` 중복 계산(rs_series 헬퍼와 함께), 사이클 z~0 칼날 경계(휩소 측정 대상에
 포함), 캐시/스냅샷 정리, risk_pairs 형식 검증.
 
+## M4 — 백테스트 훅 + 휩소(가짜신호) 리포트
+
+상세 계획: `M4_PLAN.md` (커밋 C1~C9). 완료 시 결정을 CLAUDE.md/스펙에 반영하고 삭제.
+
+- [x] C1. `refactor(signals): extract rs_series + reuse rrg in cli`
+      — `signals/rrg.py`: `rs_series`(한 티커의 RS-Ratio/RS-Momentum 전체 시계열,
+        티커/벤치마크 없으면 None) 분리, `compute_rrg`는 이를 호출(출력 불변).
+        백테스트 분면 이력 추적과 공유할 단일 정의.
+      — `report/synthesize.py`: `compute_flow_table(..., rrg=None)` 재사용 허용.
+      — `cli.py`: RRG 1회 계산해 랭킹표/`--plot` 공유(M1~M3 리뷰 이월 항목 해소).
+      — `tests/test_rrg.py` +2건: rs_series↔compute_rrg 마지막 값 일치, 누락 시 None.
+      - `pytest -q` 117개 통과(기존 테스트 무변경 회귀 가드).
+
 ## 다음 작업
 
-1. M4: 백테스트 훅, 휩소율 리포트, `trend_gate` 기본값/강등 규칙 확정, 윈도우 튜닝.
-   — **상세 계획은 `M4_PLAN.md`** (커밋 C1~C9 체크리스트, 함수 시그니처, 이월 항목 포함).
-   M4 완료 시 결정을 CLAUDE.md/스펙에 반영하고 M4_PLAN.md는 삭제.
+1. M4 계속: C2(하드코딩 lookback 외부화)부터 `M4_PLAN.md` 체크리스트 순서대로.
