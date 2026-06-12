@@ -75,6 +75,24 @@ def test_report_cycle_none_degrades_to_notice(price_panel):
     assert cfg.disclaimer.strip() in report
 
 
+def test_report_cycle_borderline_note(price_panel):
+    """수준 z 평균이 0 근처(|z| < 0.25)면 '경계 근처' 문구가 붙고, 아니면 없다(M4)."""
+    cfg = _config()
+    base = {
+        "phase": "Expansion",
+        "description": "선행지표가 역사 대비 높은 수준에서 개선을 유지 중인 상태",
+        "counted": 3,
+        "direction_score": 2,
+        "details": {},
+    }
+
+    near = _render(price_panel, cfg, {**base, "level_score": 0.1})
+    assert "경계 근처 — 판정이 바뀌기 쉬움" in near
+
+    clear = _render(price_panel, cfg, {**base, "level_score": 0.8})
+    assert "경계 근처" not in clear
+
+
 def test_report_cycle_unknown_phase(price_panel):
     """유효 지표 부족 -> Unknown 국면도 예외 없이 렌더되고 정합 섹터군은 생략된다."""
     cfg = _config()

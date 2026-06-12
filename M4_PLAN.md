@@ -80,12 +80,12 @@ M1부터 보류해 온 두 가지를 **근거를 갖고 확정**한다:
 - [x] 테스트: 결정론성 + 후보 수만큼 행 + 현행(14) 포함.
 
 ### C7. `feat(report): cycle borderline note + backtest report rendering`
-- [ ] `signals/cycle.py` 또는 `synthesize.py`: 사이클 수준 z 평균이 0 근처(|z| < 0.25, 상수로 두되
+- [x] `signals/cycle.py` 또는 `synthesize.py`: 사이클 수준 z 평균이 0 근처(|z| < 0.25, 상수로 두되
       의미 주석)면 국면 표기에 "(경계 근처 — 판정이 바뀌기 쉬움)" 문구 추가(이월 항목).
-- [ ] 신규 `report/backtest_report.py`: `render_backtest_report(whipsaw, gate_cmp, sweep, cfg) -> str`
+- [x] 신규 `report/backtest_report.py`: `render_backtest_report(whipsaw, gate_cmp, sweep, cfg) -> str`
       — 일반인이 읽을 수 있는 표(휩소율 = "신호가 N봉 안에 번복된 비율") + 게이트 규칙 비교 +
       윈도우 스윕 표. **"안정성" 서술만, 수익/예측 표현 금지.** 하단 `cfg.disclaimer`.
-- [ ] 테스트: 렌더 문자열에 핵심 섹션/면책 존재, 단정 표현 부재, 사이클 경계 문구 on/off.
+- [x] 테스트: 렌더 문자열에 핵심 섹션/면책 존재, 단정 표현 부재, 사이클 경계 문구 on/off.
 
 ### C8. `feat(cli): --backtest flag (M4 신호 안정성 리포트)`
 - [ ] `cli.py`: `--backtest` — 가격 로드(캐시/스냅샷 경로 공유) 후 walk→whipsaw→sweep→

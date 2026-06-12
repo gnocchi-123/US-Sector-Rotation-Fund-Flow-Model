@@ -33,6 +33,10 @@ PHASE_KO: dict[str, str] = {
     "Contraction": "수축",
 }
 
+# 사이클 수준 z 평균의 절대값이 이 미만이면 국면 판정 기준선(0) 바로 근처라
+# 다음 데이터 갱신에서 국면이 바뀌기 쉽다 — 출력에 명시한다(M4, 칼날 경계 이월 항목).
+CYCLE_BORDERLINE_Z = 0.25
+
 # 선행지표의 한계 — 사용자 대면 출력(콘솔/JSON)에 항상 함께 내보낸다.
 CYCLE_LIMITATION = (
     "선행지표는 발표 지연(수일~1개월)과 사후 개정이 있어 최신 경제 상태와 "
@@ -154,6 +158,8 @@ def render_report(
     else:
         phase = cycle["phase"]
         label = f"{phase} ({PHASE_KO[phase]})" if phase in PHASE_KO else phase
+        if phase in PHASE_KO and abs(cycle["level_score"]) < CYCLE_BORDERLINE_Z:
+            label += " (경계 근처 — 판정이 바뀌기 쉬움)"
         lines.append(f"     국면: {label} — {cycle['description']}")
         if phase in PHASE_KO:
             lines.append(

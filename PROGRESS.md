@@ -272,6 +272,17 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
       — `tests/test_sweep.py` 2건: 결정론성/후보 수만큼 행/전환 발생, degrade.
       - `pytest -q` 138개 통과.
 
+- [x] C7. `feat(report): cycle borderline note + backtest report rendering`
+      — `synthesize.py`: `CYCLE_BORDERLINE_Z = 0.25` — 사이클 수준 z 평균이 0
+        근처면 국면에 "(경계 근처 — 판정이 바뀌기 쉬움)" 추가(칼날 경계 이월 항목).
+      — 신규 `report/backtest_report.py`: `render_backtest_report` — [1] 섹터별
+        분면 휩소율 / [2] 게이트 후보 비교(규칙 설명 + Improving 비강등 안내) /
+        [3] 윈도우 스윕(현행 표식). "수익률 백테스트가 아닙니다" 헤더, 안정성
+        서술만, rate None은 "n/a (전환 없음)", 하단 cfg.disclaimer.
+      — 테스트 +5건: 섹션/면책, 단정 표현 부재(수익은 부정 맥락만 허용),
+        빈 입력 degrade, n/a 포맷, 사이클 경계 문구 on/off.
+      - `pytest -q` 143개 통과.
+
 ## 다음 작업
 
-1. M4 계속: C7(사이클 경계 문구 + 백테스트 리포트 렌더)부터.
+1. M4 계속: C8(--backtest CLI + 실측)부터.
