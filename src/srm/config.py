@@ -55,6 +55,11 @@ class Config:
     risk_slope: int = 5
     macro_lookback: int = 5
 
+    # --- M4 백테스트 옵션 섹션 (config.yaml에 없으면 기본값 — --backtest용) ---
+    backtest_horizon: int = 4
+    backtest_min_history: int = 60
+    backtest_window_candidates: tuple[int, ...] = (8, 10, 14, 20, 26)
+
     # --- M3 옵션 섹션 (config.yaml에 없으면 빈 값/기본값 — 사이클 분석을 건너뛴다) ---
     fred_series: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
     fred_dbnomics: Mapping[str, Mapping[str, str]] = field(default_factory=dict)
@@ -128,6 +133,9 @@ def load_config(path: str | Path | None = None) -> Config:
 
     risk_pairs = {name: (pair[0], pair[1]) for name, pair in tickers["risk_pairs"].items()}
 
+    # M4 백테스트 옵션 섹션 — 없으면 기본값으로 동작한다.
+    backtest = raw.get("backtest") or {}
+
     # M3 옵션 섹션 — 없으면 빈 dict/기본값으로 두고 사이클 분석은 건너뛴다.
     fred = raw.get("fred") or {}
     cycle = raw.get("cycle") or {}
@@ -157,6 +165,11 @@ def load_config(path: str | Path | None = None) -> Config:
         risk_on=float(thresholds["risk_on"]),
         risk_off=float(thresholds["risk_off"]),
         disclaimer=str(raw["disclaimer"]),
+        backtest_horizon=int(backtest.get("horizon", 4)),
+        backtest_min_history=int(backtest.get("min_history", 60)),
+        backtest_window_candidates=tuple(
+            int(w) for w in backtest.get("window_candidates", (8, 10, 14, 20, 26))
+        ),
         fred_series=_parse_indicator_meta(fred.get("series"), "fred.series"),
         fred_dbnomics=_parse_indicator_meta(fred.get("dbnomics"), "fred.dbnomics"),
         fred_period_years=int(fred.get("period_years", 10)),

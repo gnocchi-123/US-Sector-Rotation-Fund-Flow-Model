@@ -119,6 +119,27 @@ def test_load_config_parses_fred_cycle_sections(tmp_path):
     assert cfg.phase_sectors["Recovery"] == ("XLY", "XLF")
 
 
+def test_load_config_backtest_section_default_and_parse(tmp_path):
+    """backtest 옵션 섹션 — 없으면 기본값, 있으면 파싱(M4, 하위호환)."""
+    cfg = load_config(_write(tmp_path, _minimal_raw()))
+    assert cfg.backtest_horizon == 4
+    assert cfg.backtest_min_history == 60
+    assert cfg.backtest_window_candidates == (8, 10, 14, 20, 26)
+
+    raw = _minimal_raw()
+    raw["backtest"] = {"horizon": 6, "min_history": 40, "window_candidates": [10, 14]}
+    cfg = load_config(_write(tmp_path, raw))
+    assert cfg.backtest_horizon == 6
+    assert cfg.backtest_min_history == 40
+    assert cfg.backtest_window_candidates == (10, 14)
+
+
+def test_default_config_backtest_includes_current_window():
+    """레포 config.yaml의 스윕 후보에는 현행 rs_window가 포함돼야 한다."""
+    cfg = load_config()
+    assert cfg.rs_window in cfg.backtest_window_candidates
+
+
 def test_load_config_rejects_invalid_higher_is(tmp_path):
     raw = _minimal_raw()
     raw["fred"] = {"series": {"T10Y2Y": {"higher_is": "sideways"}}}

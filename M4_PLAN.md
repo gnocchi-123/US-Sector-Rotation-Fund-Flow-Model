@@ -38,15 +38,15 @@ M1부터 보류해 온 두 가지를 **근거를 갖고 확정**한다:
 - [x] 테스트: config 파싱 + ratio_score lookback 파라미터화 검증.
 
 ### C3. `feat(config): backtest options section`
-- [ ] `config.yaml`에 옵션 섹션(`fred:`와 같은 방식 — `_REQUIRED_KEYS` 불변, 없으면 기본값):
+- [x] `config.yaml`에 옵션 섹션(`fred:`와 같은 방식 — `_REQUIRED_KEYS` 불변, 없으면 기본값):
       ```yaml
       backtest:
         horizon: 4            # 휩소 판정: 전환 후 N봉 내 직전 분면 복귀면 휩소
         min_history: 60       # 이력 추적 최소 봉 수(미만이면 백테스트 생략 degrade)
         window_candidates: [8, 10, 14, 20, 26]   # rs/mom 윈도우 스윕 후보(14=현행)
       ```
-- [ ] `config.py`: `backtest_horizon`/`backtest_min_history`/`backtest_window_candidates` 필드.
-- [ ] 테스트: 섹션 없음 하위호환 + 파싱.
+- [x] `config.py`: `backtest_horizon`/`backtest_min_history`/`backtest_window_candidates` 필드.
+- [x] 테스트: 섹션 없음 하위호환 + 파싱.
 
 ### C4. `feat(backtest): quadrant/trend history pure functions`
 - [ ] 신규 `src/srm/backtest/walk.py` (순수함수만, 네트워크/Config 객체 의존 없음):

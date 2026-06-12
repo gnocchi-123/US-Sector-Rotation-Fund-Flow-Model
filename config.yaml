@@ -132,5 +132,15 @@ cycle:
     Slowdown: [XLE, XLV, XLP, XLU]
     Contraction: [XLP, XLU, XLV]
 
+# --- M4: 백테스트(신호 안정성 실측) 옵션 섹션 — 없으면 기본값으로 동작 ---
+# 수익률 백테스트가 아니다. '신호 상태 변화'만 기록해 휩소(빠른 번복) 빈도를 측정한다.
+backtest:
+  # 휩소 판정: 분면 전환 후 N봉 내에 직전 분면으로 복귀하면 휩소로 센다
+  horizon: 4
+  # 이력 추적에 필요한 최소 봉 수 — 미만이면 백테스트를 생략한다(degrade)
+  min_history: 60
+  # RRG 윈도우 스윕 후보 (rs=mom 동일값, 14=현행 config 값)
+  window_candidates: [8, 10, 14, 20, 26]
+
 disclaimer: >
   주의: 신호 '확인' 도구이며 예측이 아님. 여러 신호 합의 시 신뢰. 투자자문 아님.

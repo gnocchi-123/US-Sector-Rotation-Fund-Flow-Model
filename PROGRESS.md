@@ -236,6 +236,14 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
       — 테스트 +2건: config 기본값/파싱, ratio_score slope 파라미터화(0 vs -1).
       - `pytest -q` 119개 통과.
 
+- [x] C3. `feat(config): backtest options section`
+      — `config.yaml` `backtest:` 옵션 섹션(horizon 4 / min_history 60 /
+        window_candidates [8,10,14,20,26]) + "수익률 백테스트가 아님" 주석.
+      — `config.py`: `backtest_horizon`/`backtest_min_history`/
+        `backtest_window_candidates`(tuple) — 섹션 없으면 기본값(하위호환).
+      — 테스트 +2건: 기본값/파싱, 레포 config 후보에 현행 rs_window 포함.
+      - `pytest -q` 121개 통과.
+
 ## 다음 작업
 
-1. M4 계속: C3(backtest config 섹션)부터 `M4_PLAN.md` 체크리스트 순서대로.
+1. M4 계속: C4(backtest/walk.py)부터 `M4_PLAN.md` 체크리스트 순서대로.
