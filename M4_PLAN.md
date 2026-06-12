@@ -49,13 +49,13 @@ M1부터 보류해 온 두 가지를 **근거를 갖고 확정**한다:
 - [x] 테스트: 섹션 없음 하위호환 + 파싱.
 
 ### C4. `feat(backtest): quadrant/trend history pure functions`
-- [ ] 신규 `src/srm/backtest/walk.py` (순수함수만, 네트워크/Config 객체 의존 없음):
+- [x] 신규 `src/srm/backtest/walk.py` (순수함수만, 네트워크/Config 객체 의존 없음):
   - `quadrant_history(prices, benchmark, members, rs_window, mom_window) -> pd.DataFrame`
     — 인덱스=시간, 컬럼=티커, 값=분면 라벨(C1의 `rs_series` + `classify_quadrant`를 시점별 적용,
     NaN 구간은 결측). 데이터 부족 티커는 컬럼 제외(degrade).
   - `trend_history(prices, ticker, fast, slow) -> pd.Series` — trend_state와 같은 규칙의 시점별 판정.
   - `transitions(labels: pd.Series) -> pd.DataFrame` — (시점, from, to) 전환 기록(결측 건너뜀).
-- [ ] 테스트(`tests/test_walk.py`, conftest의 `price_panel` 재사용):
+- [x] 테스트(`tests/test_walk.py`, conftest의 `price_panel` 재사용):
       결정론성(같은 입력→같은 출력), **마지막 시점 값이 `compute_rrg`/`trend_state`와 일치**,
       transitions가 인위적 라벨 시퀀스에서 정확, 빈/부족 입력 degrade.
       **모멘텀 분면 자체는 단언 금지(M1 교훈)** — 좌우 반면·일관성만.

@@ -244,6 +244,15 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
       — 테스트 +2건: 기본값/파싱, 레포 config 후보에 현행 rs_window 포함.
       - `pytest -q` 121개 통과.
 
+- [x] C4. `feat(backtest): quadrant/trend history pure functions`
+      — 신규 `src/srm/backtest/walk.py`: `quadrant_history`(rs_series+
+        classify_quadrant를 시점별 적용, NaN 결측/티커 제외 degrade),
+        `trend_history`(trend_state 동일 규칙의 시점별 판정), `transitions`
+        ((time,from,to) 전환 기록, 결측 건너뜀). 전부 순수함수.
+      — `tests/test_walk.py` 5건: 결정론성, 마지막 시점 compute_rrg/trend_state
+        일치(분면 자체 비단언 — M1 교훈), 결측 사이 동일 라벨 비전환, degrade.
+      - `pytest -q` 126개 통과.
+
 ## 다음 작업
 
-1. M4 계속: C4(backtest/walk.py)부터 `M4_PLAN.md` 체크리스트 순서대로.
+1. M4 계속: C5(whipsaw.py)부터 `M4_PLAN.md` 체크리스트 순서대로.
