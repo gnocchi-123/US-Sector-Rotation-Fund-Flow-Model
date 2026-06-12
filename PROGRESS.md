@@ -265,6 +265,13 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
         Improving 비강등, 미지 규칙 ValueError, 규칙별 차이 발생, degrade.
       - `pytest -q` 136개 통과.
 
+- [x] C6. `feat(backtest): window sweep`
+      — 신규 `src/srm/backtest/sweep.py`: `sweep_windows` — 후보 윈도우별
+        (rs=mom 동일값) quadrant_history 재계산 → whipsaw_rate total을 행으로.
+        컬럼 window/transitions/whipsaws/rate. 이력 비면 전환 0/None degrade.
+      — `tests/test_sweep.py` 2건: 결정론성/후보 수만큼 행/전환 발생, degrade.
+      - `pytest -q` 138개 통과.
+
 ## 다음 작업
 
-1. M4 계속: C6(sweep.py)부터 `M4_PLAN.md` 체크리스트 순서대로.
+1. M4 계속: C7(사이클 경계 문구 + 백테스트 리포트 렌더)부터.

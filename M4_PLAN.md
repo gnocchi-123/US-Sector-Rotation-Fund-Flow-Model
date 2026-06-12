@@ -74,10 +74,10 @@ M1부터 보류해 온 두 가지를 **근거를 갖고 확정**한다:
 - [x] 테스트: 인위적 전환·복귀 패턴으로 비율 검증, Improving 비강등 단언, 규칙별 차이 발생 케이스.
 
 ### C6. `feat(backtest): window sweep`
-- [ ] 신규 `src/srm/backtest/sweep.py`:
+- [x] 신규 `src/srm/backtest/sweep.py`:
       `sweep_windows(prices, benchmark, members, candidates, horizon) -> pd.DataFrame`
       — 후보 윈도우별(rs=mom 동일값 스윕) 전환 수/휩소율 표. 컬럼: window/transitions/whipsaws/rate.
-- [ ] 테스트: 결정론성 + 후보 수만큼 행 + 현행(14) 포함.
+- [x] 테스트: 결정론성 + 후보 수만큼 행 + 현행(14) 포함.
 
 ### C7. `feat(report): cycle borderline note + backtest report rendering`
 - [ ] `signals/cycle.py` 또는 `synthesize.py`: 사이클 수준 z 평균이 0 근처(|z| < 0.25, 상수로 두되
