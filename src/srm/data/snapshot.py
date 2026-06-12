@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -47,6 +48,33 @@ def load_snapshot(path: Path | str) -> tuple[pd.DataFrame, dict]:
     with (snap_dir / "meta.json").open(encoding="utf-8") as f:
         meta = json.load(f)
     return prices, meta
+
+
+def prune_snapshots(snapshot_dir: Path | str = DEFAULT_SNAPSHOT_DIR, keep: int = 20) -> list[Path]:
+    """타임스탬프 이름순 최신 keep개만 남기고 오래된 스냅샷을 삭제, 목록을 반환한다.
+
+    실행마다 스냅샷이 쌓이므로 새로 저장할 때 호출해 초과분을 정리한다
+    (보관 정책: config.yaml data.snapshot_keep). keep <= 0이면 정리하지 않는다.
+    meta.json이 있는 디렉터리만 스냅샷으로 간주해 다른 파일의 오삭제를 막고,
+    개별 삭제 실패는 무시한다(예외 없이 degrade).
+    """
+    if keep <= 0:
+        return []
+    root = Path(snapshot_dir)
+    if not root.exists():
+        return []
+    snaps = sorted(
+        (d for d in root.iterdir() if d.is_dir() and (d / "meta.json").exists()),
+        key=lambda d: d.name,
+    )
+    removed: list[Path] = []
+    for d in snaps[: max(len(snaps) - keep, 0)]:
+        try:
+            shutil.rmtree(d)
+            removed.append(d)
+        except OSError:
+            continue
+    return removed
 
 
 def load_snapshot_frame(path: Path | str, name: str) -> pd.DataFrame | None:

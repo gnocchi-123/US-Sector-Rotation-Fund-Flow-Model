@@ -16,10 +16,10 @@ from srm.backtest.sweep import sweep_windows
 from srm.backtest.walk import quadrant_history, trend_history
 from srm.backtest.whipsaw import GATE_RULES, score_sign_stability, whipsaw_rate
 from srm.config import Config, load_config
-from srm.data.cache import load_cached_prices, save_prices
+from srm.data.cache import load_cached_prices, prune_cache, save_prices
 from srm.data.fred import drop_stale_series, fetch_dbnomics_series, fetch_fred_series
 from srm.data.loader import fetch_prices
-from srm.data.snapshot import load_snapshot, load_snapshot_frame, save_snapshot
+from srm.data.snapshot import load_snapshot, load_snapshot_frame, prune_snapshots, save_snapshot
 from srm.report.backtest_report import render_backtest_report
 from srm.report.export import build_export_payload, export_csv, export_json
 from srm.report.plot import plot_rrg
@@ -82,6 +82,9 @@ def _load_indicators(cfg: Config, args: argparse.Namespace) -> pd.DataFrame:
     indicators = pd.concat([fred_df, db_df], axis=1)
     if not args.no_cache and not indicators.empty:
         save_prices(indicators, ids, period, "fred", cache_dir=FRED_CACHE_DIR)
+        removed = prune_cache(FRED_CACHE_DIR, keep_days=cfg.cache_keep_days)
+        if removed:
+            print(f"[정리] 오래된 선행지표 캐시 {len(removed)}개 삭제")
     return indicators
 
 
@@ -190,6 +193,9 @@ def main() -> None:
                 sys.exit(1)
             if not args.no_cache:
                 save_prices(prices, tickers, args.period, args.interval)
+                removed = prune_cache(keep_days=cfg.cache_keep_days)
+                if removed:
+                    print(f"[정리] 오래된 가격 캐시 {len(removed)}개 삭제")
 
         indicators = None
         if cfg.fred_series or cfg.fred_dbnomics:
@@ -206,6 +212,11 @@ def main() -> None:
                 {"period": args.period, "interval": args.interval, "tickers": tickers},
                 extra_frames=extra,
             )
+            removed = prune_snapshots(keep=cfg.snapshot_keep)
+            if removed:
+                print(
+                    f"[정리] 오래된 스냅샷 {len(removed)}개 삭제 (최신 {cfg.snapshot_keep}개 보관)"
+                )
 
     cycle = _compute_cycle(cfg, indicators)
 

@@ -55,6 +55,10 @@ class Config:
     risk_slope: int = 5
     macro_lookback: int = 5
 
+    # --- 캐시/스냅샷 보관 정책 (data 섹션 옵션 키, 0 = 정리 끄기) ---
+    cache_keep_days: int = 7
+    snapshot_keep: int = 20
+
     # --- M4 백테스트 옵션 섹션 (config.yaml에 없으면 기본값 — --backtest용) ---
     backtest_horizon: int = 4
     backtest_min_history: int = 60
@@ -184,6 +188,8 @@ def load_config(path: str | Path | None = None) -> Config:
         trend_gate=bool(weights["trend_gate"]),
         data_period=str(data["period"]),
         data_interval=str(data["interval"]),
+        cache_keep_days=int(data.get("cache_keep_days", 7)),
+        snapshot_keep=int(data.get("snapshot_keep", 20)),
         risk_on=float(thresholds["risk_on"]),
         risk_off=float(thresholds["risk_off"]),
         disclaimer=str(raw["disclaimer"]),

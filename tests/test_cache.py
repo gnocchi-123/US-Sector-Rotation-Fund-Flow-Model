@@ -1,8 +1,11 @@
 # 가격 캐시(data/cache.py) 단위테스트 — 네트워크 없음, 파일 I/O는 tmp_path에서.
 
+import os
+import time
+
 import pandas as pd
 
-from srm.data.cache import cache_path, load_cached_prices, save_prices
+from srm.data.cache import cache_path, load_cached_prices, prune_cache, save_prices
 
 
 def test_cache_path_stable_for_same_inputs(tmp_path):
@@ -34,3 +37,31 @@ def test_save_and_load_roundtrip(tmp_path, price_panel: pd.DataFrame):
 
 def test_load_cached_prices_missing_returns_none(tmp_path):
     assert load_cached_prices(["SPY"], "2y", "1wk", tmp_path) is None
+
+
+def _age_file(path, days: float) -> None:
+    """파일의 mtime을 days일 전으로 되돌린다 (보관 정책 테스트용)."""
+    old = time.time() - days * 86400
+    os.utime(path, (old, old))
+
+
+def test_prune_cache_removes_only_old_files(tmp_path, price_panel: pd.DataFrame):
+    old_path = save_prices(price_panel, ["SPY"], "2y", "1wk", tmp_path)
+    fresh_path = save_prices(price_panel, ["XLK"], "2y", "1wk", tmp_path)
+    _age_file(old_path, days=10)
+
+    removed = prune_cache(tmp_path, keep_days=7)
+
+    assert removed == [old_path]
+    assert not old_path.exists()
+    assert fresh_path.exists()
+
+
+def test_prune_cache_disabled_or_missing_dir(tmp_path, price_panel: pd.DataFrame):
+    old_path = save_prices(price_panel, ["SPY"], "2y", "1wk", tmp_path)
+    _age_file(old_path, days=10)
+
+    # keep_days=0 -> 정리 끄기, 캐시 디렉터리 없음 -> 예외 없이 빈 목록.
+    assert prune_cache(tmp_path, keep_days=0) == []
+    assert old_path.exists()
+    assert prune_cache(tmp_path / "no_such_dir", keep_days=7) == []

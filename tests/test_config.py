@@ -119,6 +119,20 @@ def test_load_config_parses_fred_cycle_sections(tmp_path):
     assert cfg.phase_sectors["Recovery"] == ("XLY", "XLF")
 
 
+def test_load_config_retention_default_and_parse(tmp_path):
+    """data.cache_keep_days/snapshot_keep — 없으면 기본값(7/20), 있으면 파싱."""
+    cfg = load_config(_write(tmp_path, _minimal_raw()))
+    assert cfg.cache_keep_days == 7
+    assert cfg.snapshot_keep == 20
+
+    raw = _minimal_raw()
+    raw["data"]["cache_keep_days"] = 3
+    raw["data"]["snapshot_keep"] = 0  # 0 = 정리 끄기
+    cfg = load_config(_write(tmp_path, raw))
+    assert cfg.cache_keep_days == 3
+    assert cfg.snapshot_keep == 0
+
+
 @pytest.mark.parametrize(
     "bad_pair",
     [

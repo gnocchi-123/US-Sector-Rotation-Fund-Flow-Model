@@ -317,7 +317,24 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
       — `tests/test_config.py` +6건: 길이/타입/빈 문자열/비매핑 케이스.
       - `pytest -q` 150개 통과.
 
+- [x] 2. `feat(data): cache/snapshot retention policy`
+      — `config.yaml` `data`에 옵션 키 `cache_keep_days: 7`/`snapshot_keep: 20`
+        (0 = 정리 끄기), `config.py` 기본값 파싱(하위호환).
+      — `cache.py`: `prune_cache` — 새 저장 시 mtime이 keep_days보다 오래된
+        캐시 파일 삭제(키에 날짜가 들어가 하루마다 쌓이는 문제 해소).
+      — `snapshot.py`: `prune_snapshots` — 타임스탬프순 최신 N개만 보관.
+        meta.json 있는 디렉터리만 스냅샷으로 간주(오삭제 방지). 둘 다 삭제 실패
+        무시(degrade), 삭제 목록 반환.
+      — `cli.py`: 가격/선행지표 캐시 저장 후 + 스냅샷 저장 후 정리 호출,
+        삭제 시 "[정리] ..." 메시지.
+      — 테스트 +5건(config 1, cache 2, snapshot 2): 오래된 것만 삭제, 끄기/
+        디렉터리 없음/한도 이내 degrade.
+      - `pytest -q` 155개 통과. 실데이터 확인: 10일 묵은 캐시 파일이
+        "[정리] 오래된 가격 캐시 1개 삭제"로 정리됨.
+
+**리뷰 이월 항목 전부 처리 완료.**
+
 ## 다음 작업
 
-1. (이월 잔여) 캐시/스냅샷 정리 정책.
-2. 마일스톤 M1~M4 완료 — 이후 작업은 새 요구사항 발생 시 스펙/ROADMAP 갱신부터.
+1. 마일스톤 M1~M4 + 이월 항목 완료 — 이후 작업은 새 요구사항 발생 시
+   스펙/ROADMAP 갱신부터.

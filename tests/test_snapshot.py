@@ -6,7 +6,7 @@
 import pandas as pd
 
 from srm.config import Config
-from srm.data.snapshot import load_snapshot, load_snapshot_frame, save_snapshot
+from srm.data.snapshot import load_snapshot, load_snapshot_frame, prune_snapshots, save_snapshot
 from srm.report.synthesize import compute_flow_table, render_report
 from srm.signals.risk import compute_risk_appetite
 
@@ -39,6 +39,31 @@ def test_snapshot_extra_frames_roundtrip(tmp_path, price_panel, expansion_panel)
     # extra_frames 없이 저장된 과거 스냅샷은 None(하위호환, 예외 없음).
     old_dir = save_snapshot(price_panel, {}, tmp_path)
     assert load_snapshot_frame(old_dir, "indicators") is None
+
+
+def test_prune_snapshots_keeps_latest_n(tmp_path, price_panel: pd.DataFrame):
+    dirs = [save_snapshot(price_panel, {}, tmp_path) for _ in range(3)]
+    # 스냅샷이 아닌 디렉터리(meta.json 없음)는 정리 대상이 아니다.
+    other = tmp_path / "not_a_snapshot"
+    other.mkdir()
+
+    removed = prune_snapshots(tmp_path, keep=2)
+
+    assert removed == [dirs[0]]  # 타임스탬프 이름순으로 가장 오래된 것만 삭제
+    assert not dirs[0].exists()
+    assert dirs[1].exists() and dirs[2].exists()
+    assert other.exists()
+
+
+def test_prune_snapshots_disabled_or_under_limit(tmp_path, price_panel: pd.DataFrame):
+    dirs = [save_snapshot(price_panel, {}, tmp_path) for _ in range(2)]
+
+    # keep=0 -> 정리 끄기, 보관 한도 이내 -> 아무것도 삭제하지 않음.
+    assert prune_snapshots(tmp_path, keep=0) == []
+    assert prune_snapshots(tmp_path, keep=5) == []
+    assert all(d.exists() for d in dirs)
+    # 스냅샷 디렉터리 자체가 없어도 예외 없이 빈 목록.
+    assert prune_snapshots(tmp_path / "no_such_dir", keep=2) == []
 
 
 def _sample_config() -> Config:
