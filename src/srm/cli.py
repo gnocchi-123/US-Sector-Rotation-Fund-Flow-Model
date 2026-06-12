@@ -12,11 +12,15 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
+from srm.backtest.sweep import sweep_windows
+from srm.backtest.walk import quadrant_history, trend_history
+from srm.backtest.whipsaw import GATE_RULES, score_sign_stability, whipsaw_rate
 from srm.config import Config, load_config
 from srm.data.cache import load_cached_prices, save_prices
 from srm.data.fred import drop_stale_series, fetch_dbnomics_series, fetch_fred_series
 from srm.data.loader import fetch_prices
 from srm.data.snapshot import load_snapshot, load_snapshot_frame, save_snapshot
+from srm.report.backtest_report import render_backtest_report
 from srm.report.export import build_export_payload, export_csv, export_json
 from srm.report.plot import plot_rrg
 from srm.report.synthesize import compute_flow_table, render_report
@@ -102,6 +106,34 @@ def _compute_cycle(cfg: Config, indicators: pd.DataFrame | None) -> dict | None:
         return None
 
 
+def _run_backtest(prices: pd.DataFrame, cfg: Config) -> None:
+    """신호 안정성(휩소) 리포트 계산 + 출력 (M4).
+
+    수익률 백테스트가 아니라 신호 상태 변화만 기록한다. 호출부의 try/except와
+    여기의 min_history 가드로, 어떤 실패도 본 리포트를 막지 않는다.
+    """
+    if len(prices) < cfg.backtest_min_history:
+        print(
+            f"[백테스트] 데이터 {len(prices)}봉 < 최소 {cfg.backtest_min_history}봉 — "
+            "신호 안정성 리포트를 생략합니다 (--period를 늘려 보세요)."
+        )
+        return
+    members = list(cfg.sectors)
+    quad_hist = quadrant_history(prices, cfg.benchmark, members, cfg.rs_window, cfg.mom_window)
+    trend_hists = {t: trend_history(prices, t, cfg.trend_fast, cfg.trend_slow) for t in members}
+    weights = {"quad_flow": cfg.quad_flow, "trend": cfg.trend}
+    whipsaw = whipsaw_rate(quad_hist, cfg.backtest_horizon)
+    gate_cmp = {
+        rule: score_sign_stability(quad_hist, trend_hists, weights, cfg.backtest_horizon, rule)
+        for rule in GATE_RULES
+    }
+    sweep = sweep_windows(
+        prices, cfg.benchmark, members, cfg.backtest_window_candidates, cfg.backtest_horizon
+    )
+    print()
+    print(render_backtest_report(whipsaw, gate_cmp, sweep, cfg))
+
+
 def main() -> None:
     load_dotenv()
     ap = argparse.ArgumentParser(description="섹터 자금흐름 판단 모델")
@@ -127,6 +159,11 @@ def main() -> None:
         action="append",
         choices=["json", "csv"],
         help="섹터 자금흐름 랭킹을 파일로 내보낸다(반복 지정 가능)",
+    )
+    ap.add_argument(
+        "--backtest",
+        action="store_true",
+        help="신호 안정성(휩소) 리포트를 함께 출력한다 (수익률 백테스트 아님)",
     )
     args = ap.parse_args()
 
@@ -197,6 +234,12 @@ def main() -> None:
                 else:
                     path = export_csv(flow_table, "flow_table.csv")
                 print(f"[내보내기] {path}")
+
+    if args.backtest:
+        try:
+            _run_backtest(prices, cfg)
+        except Exception as e:
+            print(f"[백테스트] 처리 실패, 신호 안정성 리포트 생략: {e}")
 
 
 if __name__ == "__main__":

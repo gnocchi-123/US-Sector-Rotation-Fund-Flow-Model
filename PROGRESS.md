@@ -283,6 +283,18 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
         빈 입력 degrade, n/a 포맷, 사이클 경계 문구 on/off.
       - `pytest -q` 143개 통과.
 
+- [x] C8. `feat(cli): --backtest flag (신호 안정성 리포트)`
+      — `cli.py`: `--backtest` 플래그 + `_run_backtest`(min_history 가드,
+        walk→whipsaw→gate 비교→sweep→render, 호출부 try/except — 어떤 실패도
+        본 리포트를 막지 않음). 가격 로드는 기존 캐시/스냅샷 경로 공유.
+      — **실측**(주봉 2y/5y, 일관됨): ① 분면 휩소율 전체 70%(섹터별 59~79%).
+        ② 게이트 비교: none 79%/77% vs contradiction_only 81%/81% — 전환 수는
+        소폭 줄지만 휩소율은 오히려 상승(부호 안정성 개선 없음).
+        ③ 윈도우 스윕: 8→26으로 갈수록 전환 수는 감소(1684→1455), 휩소율은
+        상승(65%→78%). 현행 14는 중간(70%, 절대 휩소 수 최소 구간).
+      - `pytest -q` 143개 통과.
+
 ## 다음 작업
 
-1. M4 계속: C8(--backtest CLI + 실측)부터.
+1. M4 C9: 실측 표를 근거로 사용자와 trend_gate 기본값/강등 규칙/윈도우 확정 →
+   CLAUDE.md 결정 3/스펙/config 주석 반영, M4_PLAN.md 삭제.

@@ -88,9 +88,13 @@ M1부터 보류해 온 두 가지를 **근거를 갖고 확정**한다:
 - [x] 테스트: 렌더 문자열에 핵심 섹션/면책 존재, 단정 표현 부재, 사이클 경계 문구 on/off.
 
 ### C8. `feat(cli): --backtest flag (M4 신호 안정성 리포트)`
-- [ ] `cli.py`: `--backtest` — 가격 로드(캐시/스냅샷 경로 공유) 후 walk→whipsaw→sweep→
+- [x] `cli.py`: `--backtest` — 가격 로드(캐시/스냅샷 경로 공유) 후 walk→whipsaw→sweep→
       `render_backtest_report` 출력. 실패해도 본 리포트를 절대 막지 않음(try/except degrade).
-- [ ] 실측: `python -m srm.cli --backtest`(주봉 2y)와 `--period 5y`로 휩소율·게이트 비교·스윕 실측.
+- [x] 실측: `python -m srm.cli --backtest`(주봉 2y)와 `--period 5y`로 휩소율·게이트 비교·스윕 실측.
+      결과(2y / 5y 일관): 분면 휩소율 전체 70% / 70%. 게이트 비교 — none 79%/77% vs
+      contradiction_only 81%/81%(전환 수는 소폭 감소하나 휩소율은 오히려 상승 → 부호 안정성
+      개선 없음). 윈도우 스윕 — 짧을수록 전환 多·휩소율 低(8: 65~66%), 길수록 전환 少·휩소율
+      高(26: 76~78%), 현행 14는 중간(70%).
 
 ### C9. `feat: trend_gate default decision (M4 완료)` — **사용자 결정 체크포인트**
 - [ ] C8 실측 표를 **사용자에게 보여주고** 함께 확정: ① trend_gate 기본값 ON/OFF,
