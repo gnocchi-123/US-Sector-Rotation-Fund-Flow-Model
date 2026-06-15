@@ -334,7 +334,38 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
 
 **리뷰 이월 항목 전부 처리 완료.**
 
+## M5 — Markdown 종합 보고서 산출물 (`--report-md`)
+
+사용자 요구(2026-06-15): 흩어진 산출물을 가시성 좋은 단일 .md로 묶어 추후 Claude AI
+루틴(예약 클라우드 에이전트)으로 주기 수신. 새 기능이므로 스펙/ROADMAP 갱신부터 착수.
+
+- [x] 1. `docs: spec/roadmap에 M5 항목` — `00_PROJECT_SPEC.md`(8절 M5 + 6절 출력),
+      `ROADMAP.md`(M5 섹션)에 근거 기록.
+- [x] 2. `feat(config): report output section`
+      — `config.yaml` `report.output_dir`(기본 `reports`) 옵션 섹션(하위호환),
+        `Config.report_output_dir`, `.gitignore`에 `reports/`. test_config +1건.
+- [x] 3. `feat(report): markdown 종합 보고서 렌더`
+      — 신규 `report/markdown_report.py`: `render_markdown_report` — 시장국면(배지)/
+        섹터랭킹/핵심요약/RRG차트 임베드/거시참고/경기사이클/신호안정성(백테스트)/
+        용어 부록(접이식)을 단일 .md로. GFM 표는 자체 헬퍼(`tabulate` 의존 회피),
+        상수/포맷터는 `synthesize`/`backtest_report` 재사용. 사이클/백테스트/차트/빈
+        랭킹표는 예외 없이 안내문 degrade. 면책·후행성·비단정 원칙 유지.
+      — `tests/test_markdown_report.py` 5건: 섹션·면책, 비단정, GFM 유효성,
+        4종 degrade, 빈 표 안전 degrade.
+- [x] 4. `feat(cli): --report-md 플래그`
+      — `cli.py`: `--report-md [PATH]` — 차트(동명 PNG)+백테스트+md 일괄 생성.
+        경로 생략 시 `report.output_dir/flow-report-<날짜>.md`(날짜별 자기완결).
+        이미지 링크는 같은 디렉터리 상대경로. `_run_backtest`를 `_compute_backtest`
+        (계산)/콘솔 출력으로 분리해 보고서와 결과 공유. 부분 실패는 해당 섹션만 degrade.
+      - `pytest -q` 161개 통과. **오프라인 검증**: 오늘(2026-06-15) 스냅샷으로
+        `--report-md` 실행 → `reports/flow-report-2026-06-08.md`(+동명 PNG) 생성,
+        7개 섹션·GFM 표·차트 임베드·배지·면책 육안 확인. ruff/black 통과.
+
+**M5 완료.** ROADMAP.md의 config/렌더/CLI 3개 작업 모두 반영됨.
+
 ## 다음 작업
 
-1. 마일스톤 M1~M4 + 이월 항목 완료 — 이후 작업은 새 요구사항 발생 시
+1. 마일스톤 M1~M5 + 이월 항목 완료 — 이후 작업은 새 요구사항 발생 시
    스펙/ROADMAP 갱신부터.
+2. (선택) Claude AI 루틴 설정 시: `python -m srm.cli --report-md`를 주기 실행하도록
+   스케줄. FRED 키(.env)가 있으면 사이클 섹션까지 채워진다.
