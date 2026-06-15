@@ -52,7 +52,9 @@ def backtest(price_panel, cfg):
     """실제 백테스트 헬퍼로 만든 유효한 backtest dict (렌더러 입력 스키마)."""
     members = list(cfg.sectors)
     quad_hist = quadrant_history(price_panel, cfg.benchmark, members, cfg.rs_window, cfg.mom_window)
-    trend_hists = {t: trend_history(price_panel, t, cfg.trend_fast, cfg.trend_slow) for t in members}
+    trend_hists = {
+        t: trend_history(price_panel, t, cfg.trend_fast, cfg.trend_slow) for t in members
+    }
     weights = {"quad_flow": cfg.quad_flow, "trend": cfg.trend}
     return {
         "whipsaw": whipsaw_rate(quad_hist, cfg.backtest_horizon),
@@ -61,7 +63,11 @@ def backtest(price_panel, cfg):
             for rule in ("none", "contradiction_only")
         },
         "sweep": sweep_windows(
-            price_panel, cfg.benchmark, members, cfg.backtest_window_candidates, cfg.backtest_horizon
+            price_panel,
+            cfg.benchmark,
+            members,
+            cfg.backtest_window_candidates,
+            cfg.backtest_horizon,
         ),
     }
 
@@ -79,10 +85,18 @@ def cycle():
     }
 
 
-def test_report_has_all_sections_and_disclaimer(flow_table, risk, price_panel, cfg, cycle, backtest):
+def test_report_has_all_sections_and_disclaimer(
+    flow_table, risk, price_panel, cfg, cycle, backtest
+):
     md = render_markdown_report(
-        flow_table, risk, price_panel, cfg, "1wk",
-        cycle=cycle, backtest=backtest, chart_name="rrg.png",
+        flow_table,
+        risk,
+        price_panel,
+        cfg,
+        "1wk",
+        cycle=cycle,
+        backtest=backtest,
+        chart_name="rrg.png",
     )
     for heading in [
         "## 1. 시장 국면",
@@ -103,8 +117,14 @@ def test_report_has_all_sections_and_disclaimer(flow_table, risk, price_panel, c
 
 def test_report_no_predictive_language(flow_table, risk, price_panel, cfg, cycle, backtest):
     md = render_markdown_report(
-        flow_table, risk, price_panel, cfg, "1wk",
-        cycle=cycle, backtest=backtest, chart_name="rrg.png",
+        flow_table,
+        risk,
+        price_panel,
+        cfg,
+        "1wk",
+        cycle=cycle,
+        backtest=backtest,
+        chart_name="rrg.png",
     )
     for phrase in FORBIDDEN_PHRASES:
         assert phrase not in md, phrase
@@ -123,8 +143,14 @@ def test_ranking_table_is_valid_gfm(flow_table, risk, price_panel, cfg):
 
 def test_degrade_when_cycle_backtest_chart_missing(flow_table, risk, price_panel, cfg):
     md = render_markdown_report(
-        flow_table, risk, price_panel, cfg, "1wk",
-        cycle=None, backtest=None, chart_name=None,
+        flow_table,
+        risk,
+        price_panel,
+        cfg,
+        "1wk",
+        cycle=None,
+        backtest=None,
+        chart_name=None,
     )
     # 예외 없이 각 섹션이 안내문으로 대체되고, 면책은 유지된다.
     assert "사이클 분석을 생략합니다" in md
