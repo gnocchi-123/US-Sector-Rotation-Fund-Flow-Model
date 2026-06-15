@@ -43,9 +43,7 @@ def _md_table(headers: Sequence[str], rows: Sequence[Sequence[object]]) -> str:
     """GFM 파이프 테이블 문자열. pandas.to_markdown(tabulate 의존)을 피해 직접 만든다."""
     head = "| " + " | ".join(str(h) for h in headers) + " |"
     sep = "| " + " | ".join("---" for _ in headers) + " |"
-    body = [
-        "| " + " | ".join(str(c) for c in row) + " |" for row in rows
-    ]
+    body = ["| " + " | ".join(str(c) for c in row) + " |" for row in rows]
     return "\n".join([head, sep, *body])
 
 
@@ -211,6 +209,7 @@ def _cycle_section(cycle: Mapping | None, cfg: Config) -> list[str]:
     if sectors:
         names = ", ".join(f"{cfg.sectors.get(t, t)}({t})" for t in sectors)
         lines.append(f"- 이 국면과 역사적으로 정합적이라 알려진 섹터군(참고, 추천 아님): {names}")
+        lines.append("")
     lines += [f"> ⚠️ {CYCLE_LIMITATION}", ""]
     return lines
 
@@ -239,7 +238,12 @@ def _backtest_section(backtest: Mapping | None, cfg: Config) -> list[str]:
     per_ticker = whipsaw.get("per_ticker", {})
     if per_ticker:
         rows = [
-            (f"{cfg.sectors.get(t, t)} ({t})", e["transitions"], e["whipsaws"], _fmt_rate(e["rate"]))
+            (
+                f"{cfg.sectors.get(t, t)} ({t})",
+                e["transitions"],
+                e["whipsaws"],
+                _fmt_rate(e["rate"]),
+            )
             for t, e in per_ticker.items()
         ]
         rows.append(

@@ -9,6 +9,7 @@ import argparse
 import os
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 import pandas as pd
 
@@ -22,6 +23,7 @@ from srm.data.loader import fetch_prices
 from srm.data.snapshot import load_snapshot, load_snapshot_frame, prune_snapshots, save_snapshot
 from srm.report.backtest_report import render_backtest_report
 from srm.report.export import build_export_payload, export_csv, export_json
+from srm.report.markdown_report import render_markdown_report
 from srm.report.plot import plot_rrg
 from srm.report.synthesize import compute_flow_table, render_report
 from srm.signals.cycle import compute_cycle_position
@@ -109,32 +111,98 @@ def _compute_cycle(cfg: Config, indicators: pd.DataFrame | None) -> dict | None:
         return None
 
 
-def _run_backtest(prices: pd.DataFrame, cfg: Config) -> None:
-    """신호 안정성(휩소) 리포트 계산 + 출력 (M4).
+def _compute_backtest(prices: pd.DataFrame, cfg: Config) -> dict | None:
+    """신호 안정성(휩소) 백테스트 계산만 수행 (M4). 이력 부족 시 None(degrade).
 
-    수익률 백테스트가 아니라 신호 상태 변화만 기록한다. 호출부의 try/except와
-    여기의 min_history 가드로, 어떤 실패도 본 리포트를 막지 않는다.
+    수익률 백테스트가 아니라 신호 상태 변화만 기록한다. 콘솔(`--backtest`)과
+    Markdown 보고서(`--report-md`)가 같은 결과를 공유해 이중 계산을 피한다.
     """
     if len(prices) < cfg.backtest_min_history:
+        return None
+    members = list(cfg.sectors)
+    quad_hist = quadrant_history(prices, cfg.benchmark, members, cfg.rs_window, cfg.mom_window)
+    trend_hists = {t: trend_history(prices, t, cfg.trend_fast, cfg.trend_slow) for t in members}
+    weights = {"quad_flow": cfg.quad_flow, "trend": cfg.trend}
+    return {
+        "whipsaw": whipsaw_rate(quad_hist, cfg.backtest_horizon),
+        "gate_cmp": {
+            rule: score_sign_stability(quad_hist, trend_hists, weights, cfg.backtest_horizon, rule)
+            for rule in GATE_RULES
+        },
+        "sweep": sweep_windows(
+            prices, cfg.benchmark, members, cfg.backtest_window_candidates, cfg.backtest_horizon
+        ),
+    }
+
+
+def _run_backtest(prices: pd.DataFrame, cfg: Config) -> None:
+    """신호 안정성(휩소) 리포트 계산 + 콘솔 출력 (M4).
+
+    호출부의 try/except와 _compute_backtest의 min_history 가드로, 어떤 실패도
+    본 리포트를 막지 않는다.
+    """
+    bt = _compute_backtest(prices, cfg)
+    if bt is None:
         print(
             f"[백테스트] 데이터 {len(prices)}봉 < 최소 {cfg.backtest_min_history}봉 — "
             "신호 안정성 리포트를 생략합니다 (--period를 늘려 보세요)."
         )
         return
-    members = list(cfg.sectors)
-    quad_hist = quadrant_history(prices, cfg.benchmark, members, cfg.rs_window, cfg.mom_window)
-    trend_hists = {t: trend_history(prices, t, cfg.trend_fast, cfg.trend_slow) for t in members}
-    weights = {"quad_flow": cfg.quad_flow, "trend": cfg.trend}
-    whipsaw = whipsaw_rate(quad_hist, cfg.backtest_horizon)
-    gate_cmp = {
-        rule: score_sign_stability(quad_hist, trend_hists, weights, cfg.backtest_horizon, rule)
-        for rule in GATE_RULES
-    }
-    sweep = sweep_windows(
-        prices, cfg.benchmark, members, cfg.backtest_window_candidates, cfg.backtest_horizon
-    )
     print()
-    print(render_backtest_report(whipsaw, gate_cmp, sweep, cfg))
+    print(render_backtest_report(bt["whipsaw"], bt["gate_cmp"], bt["sweep"], cfg))
+
+
+def _resolve_report_path(arg: str, cfg: Config, last_date) -> Path:
+    """--report-md 경로 결정. 빈 문자열이면 기본 경로(날짜별 자기완결)."""
+    if arg:
+        return Path(arg)
+    return Path(cfg.report_output_dir) / f"flow-report-{last_date}.md"
+
+
+def _write_markdown_report(
+    md_path: Path,
+    prices: pd.DataFrame,
+    cfg: Config,
+    interval: str,
+    rrg: pd.DataFrame,
+    flow_table: pd.DataFrame,
+    risk: dict,
+    cycle: dict | None,
+) -> None:
+    """RRG 차트(동명 PNG) + 백테스트 + Markdown 보고서를 한 번에 생성한다 (M5).
+
+    차트/백테스트의 부분 실패는 해당 섹션만 degrade시키고 본 보고서를 막지 않는다.
+    md의 이미지 링크는 같은 디렉터리 상대경로(파일명만)라 어디서 열어도 해석된다.
+    """
+    md_path.parent.mkdir(parents=True, exist_ok=True)
+
+    chart_name: str | None = None
+    if not flow_table.empty:
+        try:
+            png_path = md_path.with_suffix(".png")
+            plot_rrg(rrg, outfile=str(png_path))
+            chart_name = png_path.name
+        except Exception as e:  # 차트 실패가 보고서를 막지 않음
+            print(f"[보고서] 차트 생성 실패, 차트 섹션 생략: {e}")
+
+    try:
+        backtest = _compute_backtest(prices, cfg)
+    except Exception as e:
+        print(f"[보고서] 백테스트 처리 실패, 안정성 섹션 생략: {e}")
+        backtest = None
+
+    md = render_markdown_report(
+        flow_table,
+        risk,
+        prices,
+        cfg,
+        interval,
+        cycle=cycle,
+        backtest=backtest,
+        chart_name=chart_name,
+    )
+    md_path.write_text(md, encoding="utf-8")
+    print(f"[보고서] {md_path}")
 
 
 def main() -> None:
@@ -167,6 +235,15 @@ def main() -> None:
         "--backtest",
         action="store_true",
         help="신호 안정성(휩소) 리포트를 함께 출력한다 (수익률 백테스트 아님)",
+    )
+    ap.add_argument(
+        "--report-md",
+        nargs="?",
+        const="",
+        default=None,
+        metavar="PATH",
+        help="콘솔 리포트 전체+RRG 차트+백테스트+용어 부록을 단일 Markdown 보고서로 저장한다"
+        " (경로 생략 시 report.output_dir/flow-report-<날짜>.md)",
     )
     args = ap.parse_args()
 
@@ -251,6 +328,15 @@ def main() -> None:
             _run_backtest(prices, cfg)
         except Exception as e:
             print(f"[백테스트] 처리 실패, 신호 안정성 리포트 생략: {e}")
+
+    if args.report_md is not None:
+        try:
+            md_path = _resolve_report_path(args.report_md, cfg, prices.index[-1].date())
+            _write_markdown_report(
+                md_path, prices, cfg, args.interval, rrg, flow_table, risk, cycle
+            )
+        except Exception as e:
+            print(f"[보고서] Markdown 보고서 생성 실패: {e}")
 
 
 if __name__ == "__main__":
