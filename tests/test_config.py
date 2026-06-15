@@ -192,3 +192,14 @@ def test_default_config_has_fred_cycle_sections():
     assert "T10Y2Y" in cfg.fred_series
     assert all(m["higher_is"] in ("expansion", "contraction") for m in cfg.fred_series.values())
     assert set(cfg.phase_sectors) == {"Recovery", "Expansion", "Slowdown", "Contraction"}
+
+
+def test_load_config_report_section_default_and_parse(tmp_path):
+    """report 옵션 섹션 — 없으면 기본값 'reports', 있으면 파싱(M5, 하위호환)."""
+    cfg = load_config(_write(tmp_path, _minimal_raw()))
+    assert cfg.report_output_dir == "reports"
+
+    raw = _minimal_raw()
+    raw["report"] = {"output_dir": "out/daily"}
+    cfg = load_config(_write(tmp_path, raw))
+    assert cfg.report_output_dir == "out/daily"

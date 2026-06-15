@@ -59,6 +59,9 @@ class Config:
     cache_keep_days: int = 7
     snapshot_keep: int = 20
 
+    # --- M5 보고서 옵션 섹션 (config.yaml에 없으면 기본값 — --report-md용) ---
+    report_output_dir: str = "reports"
+
     # --- M4 백테스트 옵션 섹션 (config.yaml에 없으면 기본값 — --backtest용) ---
     backtest_horizon: int = 4
     backtest_min_history: int = 60
@@ -162,6 +165,9 @@ def load_config(path: str | Path | None = None) -> Config:
     # M4 백테스트 옵션 섹션 — 없으면 기본값으로 동작한다.
     backtest = raw.get("backtest") or {}
 
+    # M5 보고서 옵션 섹션 — 없으면 기본값으로 동작한다.
+    report = raw.get("report") or {}
+
     # M3 옵션 섹션 — 없으면 빈 dict/기본값으로 두고 사이클 분석은 건너뛴다.
     fred = raw.get("fred") or {}
     cycle = raw.get("cycle") or {}
@@ -190,6 +196,7 @@ def load_config(path: str | Path | None = None) -> Config:
         data_interval=str(data["interval"]),
         cache_keep_days=int(data.get("cache_keep_days", 7)),
         snapshot_keep=int(data.get("snapshot_keep", 20)),
+        report_output_dir=str(report.get("output_dir", "reports")),
         risk_on=float(thresholds["risk_on"]),
         risk_off=float(thresholds["risk_off"]),
         disclaimer=str(raw["disclaimer"]),

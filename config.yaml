@@ -151,5 +151,12 @@ backtest:
   # RRG 윈도우 스윕 후보 (rs=mom 동일값, 14=현행 config 값)
   window_candidates: [8, 10, 14, 20, 26]
 
+# --- M5: Markdown 종합 보고서 산출물 옵션 섹션 — 없으면 기본값으로 동작 ---
+report:
+  # --report-md의 기본 출력 디렉터리. 실행마다 reports/flow-report-<날짜>.md +
+  # 동명 PNG가 생성된다(날짜별 자기완결 — 루틴이 매일 돌아도 비충돌).
+  # .gitignore에 포함되어 산출물이 커밋되지 않는다.
+  output_dir: reports
+
 disclaimer: >
   주의: 신호 '확인' 도구이며 예측이 아님. 여러 신호 합의 시 신뢰. 투자자문 아님.
