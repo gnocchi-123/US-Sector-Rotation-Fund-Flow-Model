@@ -137,3 +137,10 @@ def test_empty_flow_table_safe_degrade(risk, price_panel, cfg):
     md = render_markdown_report(pd.DataFrame(), risk, price_panel, cfg, "1wk")
     assert "데이터가 부족" in md
     assert cfg.disclaimer.strip() in md
+
+
+def test_empty_prices_safe_degrade(risk, cfg):
+    """가격 데이터가 비면 prices.index[-1] 접근으로 죽지 않고 안내문 degrade."""
+    md = render_markdown_report(pd.DataFrame(), risk, pd.DataFrame(), cfg, "1wk")
+    assert "가격 데이터를 불러오지 못해" in md
+    assert cfg.disclaimer.strip() in md

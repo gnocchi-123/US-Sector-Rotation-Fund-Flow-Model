@@ -101,3 +101,17 @@ def test_report_cycle_unknown_phase(price_panel):
 
     assert "Unknown (데이터 부족)" in report
     assert "정합적이라 알려진 섹터군" not in report
+
+
+def test_report_empty_prices_safe_degrade():
+    """가격 데이터가 비면 prices.index[-1] 접근으로 죽지 않고 안내문 degrade.
+
+    (전 티커 다운로드 실패 시 fetch_prices가 빈 DataFrame을 반환하는 경로.)
+    """
+    cfg = _config()
+    empty = pd.DataFrame()
+    risk = {"regime": "MIXED", "score": 0, "max": 0, "details": {}}
+    report = render_report(empty, risk, empty, cfg, "1wk", cycle=None)
+
+    assert "데이터 없음: 가격 데이터를 불러오지 못했습니다." in report
+    assert cfg.disclaimer.strip() in report

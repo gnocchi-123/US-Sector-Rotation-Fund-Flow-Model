@@ -113,9 +113,25 @@ def render_report(
     FRED 키 미설정/다운로드 실패 시 사이클 섹션만 안내문으로 degrade).
     """
     bar = "=" * 78
+    header = f" 섹터 자금흐름 판단 모델  (기준 {interval}봉, 벤치마크 {cfg.benchmark})"
+
+    # 가격 데이터가 비면 prices.index[-1] 접근이 죽으므로 먼저 안전 degrade한다.
+    if prices.empty:
+        return "\n".join(
+            [
+                bar,
+                header,
+                " 데이터 없음: 가격 데이터를 불러오지 못했습니다.",
+                bar,
+                "",
+                cfg.disclaimer.strip(),
+                bar,
+            ]
+        )
+
     lines = [
         bar,
-        f" 섹터 자금흐름 판단 모델  (기준 {interval}봉, 벤치마크 {cfg.benchmark})",
+        header,
         f" 데이터 마지막: {prices.index[-1].date()}",
         bar,
     ]

@@ -69,6 +69,20 @@ def render_markdown_report(
     backtest = {"whipsaw":..., "gate_cmp":..., "sweep":...}(없으면 백테스트 섹션 생략 안내).
     chart_name = md와 같은 디렉터리에 저장된 RRG PNG 파일명(없으면 차트 섹션 생략 안내).
     """
+    # 가격 데이터가 비면 prices.index[-1] 접근이 죽으므로 먼저 안전 degrade한다.
+    if prices.empty:
+        return "\n".join(
+            [
+                "# 섹터 자금흐름 판단 보고서",
+                "",
+                "가격 데이터를 불러오지 못해 보고서를 생성하지 못했습니다 "
+                "(전 티커 다운로드 실패 또는 빈 데이터).",
+                "",
+                "---",
+                f"_{cfg.disclaimer.strip()}_",
+            ]
+        )
+
     last_date = prices.index[-1].date()
     out: list[str] = [
         f"# 섹터 자금흐름 판단 보고서 — {last_date}",

@@ -295,6 +295,15 @@ def main() -> None:
                     f"[정리] 오래된 스냅샷 {len(removed)}개 삭제 (최신 {cfg.snapshot_keep}개 보관)"
                 )
 
+    # 가격 데이터가 비어 있으면(전 티커 다운로드 실패 등) 이후 렌더가 빈 인덱스
+    # 접근으로 죽으므로, 여기서 명확한 메시지와 함께 안전하게 종료한다(스펙: degrade).
+    if prices is None or prices.empty:
+        print(
+            "가격 데이터를 불러오지 못했습니다 (전 티커 다운로드 실패 또는 빈 데이터). "
+            "네트워크 연결/방화벽(yahoo finance 접근)을 확인하세요."
+        )
+        sys.exit(1)
+
     cycle = _compute_cycle(cfg, indicators)
 
     # RRG는 1회만 계산해 랭킹표와 --plot 차트가 공유한다.
