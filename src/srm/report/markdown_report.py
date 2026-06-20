@@ -192,7 +192,7 @@ def render_markdown_report(
         sub = flow_table[flow_table["Quadrant"] == q]
         if not sub.empty:
             summary_any = True
-            names = ", ".join(f"{r.Sector}({r.Ticker})" for r in sub.itertuples())
+            names = ", ".join(sector_label(r.Ticker, cfg) for r in sub.itertuples())
             out.append(f"- **{label}**: {names}")
     if not summary_any:
         out.append("- 해당 분면에 속한 섹터가 없습니다.")
@@ -308,7 +308,7 @@ def _backtest_section(backtest: Mapping | None, cfg: Config) -> list[str]:
     if per_ticker:
         rows = [
             (
-                f"{cfg.sectors.get(t, t)} ({t})",
+                sector_label(t, cfg),
                 e["transitions"],
                 e["whipsaws"],
                 _fmt_rate(e["rate"]),
