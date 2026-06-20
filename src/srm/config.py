@@ -62,6 +62,12 @@ class Config:
     # --- M5 보고서 옵션 섹션 (config.yaml에 없으면 기본값 — --report-md용) ---
     report_output_dir: str = "reports"
 
+    # --- M6 친화 보고서 옵션 (config.yaml에 없으면 빈 값/기본값 — 하위호환) ---
+    # 섹터 한글 풀이('한글명 — 한 줄 설명'). 없으면 영문 섹터명으로 degrade한다.
+    sector_desc: Mapping[str, str] = field(default_factory=dict)
+    # 노션 이미지 임베드용 GitHub raw URL 베이스. 노션 보고서는 {base}/{png}로 차트를 임베드한다.
+    report_chart_raw_base: str = ""
+
     # --- M4 백테스트 옵션 섹션 (config.yaml에 없으면 기본값 — --backtest용) ---
     backtest_horizon: int = 4
     backtest_min_history: int = 60
@@ -197,6 +203,8 @@ def load_config(path: str | Path | None = None) -> Config:
         cache_keep_days=int(data.get("cache_keep_days", 7)),
         snapshot_keep=int(data.get("snapshot_keep", 20)),
         report_output_dir=str(report.get("output_dir", "reports")),
+        sector_desc=dict(tickers.get("sector_desc", {})),
+        report_chart_raw_base=str(report.get("chart_raw_base", "")),
         risk_on=float(thresholds["risk_on"]),
         risk_off=float(thresholds["risk_off"]),
         disclaimer=str(raw["disclaimer"]),

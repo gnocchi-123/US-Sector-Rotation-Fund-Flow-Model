@@ -18,6 +18,21 @@ tickers:
     XLRE: "Real Estate"
     XLC: "Communication"
 
+  # 섹터 한글 풀이 ('한글명 — 한 줄 설명'). 비전문가용 친화 라벨/툴팁에 쓴다.
+  # 대표 업종 위주의 설명이며 특정 종목 추천이 아니다. 없으면 영문 섹터명으로 degrade.
+  sector_desc:
+    XLK: "기술 — 반도체·소프트웨어·하드웨어 등 IT"
+    XLF: "금융 — 은행·보험·증권"
+    XLV: "헬스케어 — 제약·바이오·의료기기·헬스 서비스"
+    XLY: "경기소비재 — 자동차·유통·레저 등 경기 민감 소비"
+    XLP: "필수소비재 — 식품·음료·생활용품 등 방어적 소비"
+    XLE: "에너지 — 원유·가스·정유"
+    XLI: "산업재 — 기계·항공·운송·건설"
+    XLB: "소재 — 화학·금속·광물 등 원자재"
+    XLU: "유틸리티 — 전기·가스·수도 등 공익사업(방어적)"
+    XLRE: "부동산 — 리츠(REITs)·부동산 관리"
+    XLC: "커뮤니케이션 — 통신·미디어·인터넷 플랫폼"
+
   # 위험선호 페어: 이름 -> [분자, 분모]
   risk_pairs:
     SmallVsLarge: [IWM, SPY]
@@ -157,6 +172,11 @@ report:
   # 동명 PNG가 생성된다(날짜별 자기완결 — 루틴이 매일 돌아도 비충돌).
   # .gitignore에 포함되어 산출물이 커밋되지 않는다.
   output_dir: reports
+
+  # M6: 노션 보고서가 RRG 차트(PNG)를 임베드할 GitHub raw URL 베이스.
+  # 노션 이미지 URL = {chart_raw_base}/{png 파일명}. repo가 PUBLIC이어야 노션이 렌더한다.
+  # PNG는 reports/가 .gitignore라 노션 게시 시 `git add -f`로 강제 커밋·푸시해야 노출된다.
+  chart_raw_base: "https://raw.githubusercontent.com/gnocchi-123/US-Sector-Rotation-Fund-Flow-Model/main/reports"
 
 disclaimer: >
   주의: 신호 '확인' 도구이며 예측이 아님. 여러 신호 합의 시 신뢰. 투자자문 아님.
