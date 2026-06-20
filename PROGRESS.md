@@ -363,9 +363,30 @@ FRED 대체지표 5종(T10Y2Y/ICSA/PERMIT/UMCSENT/AWHMAN) 기본 + DBnomics ISM 
 
 **M5 완료.** ROADMAP.md의 config/렌더/CLI 3개 작업 모두 반영됨.
 
+## M6 — 친화 보고서 v2 & 노션 주간 게시
+
+사용자 피드백(티커/용어 풀이, 시각 그래프, "이번 주 어디로" 결론, 정확성) 반영:
+
+- [x] 1. `config`: `tickers.sector_desc`(11개 섹터 한글 풀이) + `report.chart_raw_base`
+      (노션 이미지 임베드용 GitHub raw URL). `config.py`에 `sector_desc`/
+      `report_chart_raw_base` 필드(하위호환 기본값).
+- [x] 2. `feat(report): insight 공유 헬퍼` — 신규 `report/insight.py`(순수함수):
+      `weekly_conclusion`(국면 일반어 + 상대 유입/유출 우위 + 상대성 캐비엇),
+      `read_guide`, `flow_bar`(−3.5~+3.5 발산 막대 🟩/🟥), `sector_label`/`sector_desc_full`.
+- [x] 3. `feat(report): markdown_report 친화 개선` — 상단 `## 0. 이번 주 결론` + `### 읽는 법`,
+      랭킹표에 한글 라벨·분면 한글 꼬리표·흐름 막대 칼럼. 기존 섹션/면책 유지.
+- [x] 4. `feat(report): notion_report 신규` — Notion-flavored(`<table>`/`<callout>`/`<details>`)
+      렌더 + RRG PNG를 `chart_raw_base`로 임베드. degrade·비단정 동일 패턴.
+- [x] 5. `test`: `test_insight.py`(막대 경계/결론 분류/degrade/라벨) +
+      `test_notion_report.py`(섹션·블록·임베드·degrade) + `test_markdown_report` 갱신.
+      `pytest -q` 179개 통과(네트워크 없음). ruff/black 통과.
+      **오프라인 검증**: `--report-md` 실행 → `reports/flow-report-2026-06-15.md`에
+      결론/읽는 법/한글 라벨/발산 막대 육안 확인.
+- [ ] 6. 주간 노션 게시 루틴 등록(코드와 분리, 사용자 확인 후 `/schedule`).
+
 ## 다음 작업
 
-1. 마일스톤 M1~M5 + 이월 항목 완료 — 이후 작업은 새 요구사항 발생 시
-   스펙/ROADMAP 갱신부터.
-2. (선택) Claude AI 루틴 설정 시: `python -m srm.cli --report-md`를 주기 실행하도록
-   스케줄. FRED 키(.env)가 있으면 사이클 섹션까지 채워진다.
+1. M6 코드 완료. 남은 것은 주간 노션 자동 게시 루틴 등록(클라우드 루틴이 .md/PNG
+   커밋·푸시 후 Notion MCP로 "자금 순환 모델" 아래 날짜 페이지 생성).
+2. 노션 차트 임베드는 PNG가 public repo에 푸시돼 있어야 하므로, 게시 시
+   `git add -f reports/flow-report-<날짜>.png` 후 푸시(또는 루틴이 수행).
