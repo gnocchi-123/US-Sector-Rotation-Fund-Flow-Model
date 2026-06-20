@@ -19,6 +19,13 @@ import pandas as pd
 
 from srm.config import Config
 from srm.report.backtest_report import GATE_RULE_DESC, _fmt_rate
+from srm.report.insight import (
+    QUADRANT_KO,
+    flow_bar,
+    read_guide,
+    sector_label,
+    weekly_conclusion,
+)
 from srm.report.synthesize import (
     CYCLE_BORDERLINE_Z,
     CYCLE_LIMITATION,
@@ -50,6 +57,38 @@ def _md_table(headers: Sequence[str], rows: Sequence[Sequence[object]]) -> str:
 def _frame_table(df: pd.DataFrame) -> str:
     """DataFrame을 GFM 표로. 컬럼명을 헤더로, 행을 그대로 옮긴다."""
     return _md_table(list(df.columns), df.itertuples(index=False, name=None))
+
+
+def _ranking_table(flow_table: pd.DataFrame, cfg: Config) -> str:
+    """섹터 랭킹표 — 한글 라벨 + 분면 한글 꼬리표 + FlowScore 발산 막대 칼럼."""
+    headers = [
+        "Sector",
+        "Ticker",
+        "Quadrant",
+        "흐름",
+        "FlowScore",
+        "RS-Ratio",
+        "RS-Mom",
+        "Rot",
+        "Trend",
+    ]
+    rows = []
+    for rec in flow_table.to_dict("records"):
+        quad = f"{rec['Quadrant']} ({QUADRANT_KO.get(rec['Quadrant'], '')})"
+        rows.append(
+            (
+                sector_label(rec["Ticker"], cfg),
+                rec["Ticker"],
+                quad,
+                flow_bar(rec["FlowScore"]),
+                rec["FlowScore"],
+                rec["RS-Ratio"],
+                rec["RS-Mom"],
+                rec["Rot"],
+                rec["Trend"],
+            )
+        )
+    return _md_table(headers, rows)
 
 
 def render_markdown_report(
@@ -103,6 +142,21 @@ def render_markdown_report(
         ]
         return "\n".join(out)
 
+    # [0] 이번 주 결론 — 표를 해석하기 전에 핵심을 한눈에(상태 서술, 단정 금지).
+    concl = weekly_conclusion(flow_table, risk, cfg)
+    out += [
+        "## 0. 이번 주 결론",
+        "",
+        f"> {concl['one_liner']}",
+        "",
+        f"_{concl['caveat']}_",
+        "",
+        "### 읽는 법",
+        "",
+    ]
+    out += [f"- {line}" for line in read_guide()]
+    out += [""]
+
     # [1] 시장 국면
     out += [
         "## 1. 시장 국면 — 위험선호 vs 안전선호",
@@ -116,13 +170,14 @@ def render_markdown_report(
         "",
     ]
 
-    # [2] 섹터 자금흐름 랭킹
+    # [2] 섹터 자금흐름 랭킹 — 한글 라벨 + FlowScore 발산 막대로 친화적으로.
     out += [
         "## 2. 섹터 자금흐름 랭킹",
         "",
-        "_위로 갈수록 여러 신호가 자금 '유입' 쪽으로 합의(FlowScore 내림차순)._",
+        "_위로 갈수록 여러 신호가 자금 '유입' 쪽으로 합의(FlowScore 내림차순). "
+        "막대 🟩=유입 / 🟥=유출 우세._",
         "",
-        _frame_table(flow_table),
+        _ranking_table(flow_table, cfg),
         "",
     ]
 

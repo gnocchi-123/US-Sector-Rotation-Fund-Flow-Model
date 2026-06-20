@@ -99,6 +99,8 @@ def test_report_has_all_sections_and_disclaimer(
         chart_name="rrg.png",
     )
     for heading in [
+        "## 0. 이번 주 결론",
+        "### 읽는 법",
         "## 1. 시장 국면",
         "## 2. 섹터 자금흐름 랭킹",
         "## 3. 핵심 요약",
@@ -110,6 +112,7 @@ def test_report_has_all_sections_and_disclaimer(
         assert heading in md, heading
     assert "![Relative Rotation Graph](rrg.png)" in md  # 차트 임베드(상대경로)
     assert "Strong Sector" in md  # 섹터 표시 이름
+    assert "FlowScore" in md  # 친화 랭킹표에도 종합 점수 칼럼 유지
     assert "부록: 용어 설명" in md
     assert cfg.disclaimer.strip() in md
     assert "수익률 백테스트가 아닙니다" in md
